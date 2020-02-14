@@ -7,7 +7,7 @@
 
 namespace PT
 {
-    Image::Image( unsigned int width, unsigned int height ) :
+    Image::Image( int width, int height ) :
         m_width( width ),
         m_height( height ),
         m_pixels( static_cast< glm::vec3* >( malloc( width * height * sizeof( glm::vec3 ) ) ) )
@@ -57,9 +57,9 @@ namespace PT
         if ( ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tga" || ext == "bmp" )
         {
             uint8_t* image24Bit = static_cast< uint8_t* >( malloc( m_height * m_width * 3 ) );
-            for ( unsigned row = 0; row < m_height; ++row )
+            for ( int row = 0; row < m_height; ++row )
             {
-                for ( unsigned col = 0; col < m_width; ++col )
+                for ( int col = 0; col < m_width; ++col )
                 {
                     glm::vec3 color       = 255.0f * glm::clamp( GetPixel( row, col ), glm::vec3( 0 ), glm::vec3( 1 ) );
                     unsigned index        = 3 * (row * m_width + col);
@@ -112,12 +112,12 @@ namespace PT
         m_pixels[r * m_width + c] = pixel;
     }
 
-    unsigned int Image::GetWidth() const
+    int Image::GetWidth() const
     {
         return m_width;
     }
 
-    unsigned int Image::GetHeight() const
+    int Image::GetHeight() const
     {
         return m_height;
     }

@@ -6,9 +6,9 @@ using namespace PT;
 
 int main( int argc, char** argv )
 {
-    if ( argc != 3 )
+    if ( argc != 2 )
     {
-        std::cout << "Usage: pathTracer INPUT_FILE OUTPUT_IMAGE" << std::endl;
+        std::cout << "Usage: pathTracer SCENE_FILE" << std::endl;
         return 0;
     }
 
@@ -20,12 +20,12 @@ int main( int argc, char** argv )
     }
 
     PathTracer pathTracer;
-    pathTracer.InitImage( 1280, 720 );
+    pathTracer.InitImage( scene.imageResolution.x, scene.imageResolution.y );
     pathTracer.Render( &scene );
 
-    if ( !pathTracer.SaveImage( argv[2] ) )
+    if ( !pathTracer.SaveImage( scene.outputImageFilename ) )
     {
-        std::cout << "Could not save image '" << argv[2] << "'" << std::endl;
+        std::cout << "Could not save image '" << scene.outputImageFilename << "'" << std::endl;
     }
 
     return 0;

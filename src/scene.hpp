@@ -21,7 +21,9 @@ public:
     Camera camera;
     std::vector< Sphere > spheres;
     std::vector< PointLight > pointLights;
-    glm::vec3 backgroundColor;
+    glm::vec3 backgroundColor       = glm::vec3( 0.1f );
+    std::string outputImageFilename = "rendered.png";
+    glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );
 };
 
 } // namespace PT

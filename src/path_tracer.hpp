@@ -11,7 +11,7 @@ class PathTracer
 public:
     PathTracer() = default;
 
-    void InitImage( unsigned int width, unsigned int height );
+    void InitImage( int width, int height );
 
     void Render( Scene* scene );
 

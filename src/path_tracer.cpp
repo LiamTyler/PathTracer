@@ -1,11 +1,12 @@
 #include "path_tracer.hpp"
 #include "glm/ext.hpp"
+#include "utils/time.hpp"
 #include <algorithm>
 
 namespace PT
 {
 
-void PathTracer::InitImage( unsigned int width, unsigned int height )
+void PathTracer::InitImage( int width, int height )
 {
     renderedImage = Image( width, height );
 }
@@ -28,6 +29,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
 
 void PathTracer::Render( Scene* scene )
 {
+    auto timeStart = Time::GetTimePoint();
     assert( renderedImage.GetPixels() );
     Camera& cam = scene->camera;
 
@@ -38,11 +40,12 @@ void PathTracer::Render( Scene* scene )
     glm::vec3 dV     = -cam.GetUpDir()   * (2 * halfHeight / renderedImage.GetHeight());
     UL               += 0.5f * (dU + dV); // move to center of pixel
 
-    Ray ray;
-    ray.position = cam.position;
-    for ( unsigned row = 0; row < renderedImage.GetHeight(); ++row )
+    #pragma omp parallel for
+    for ( int row = 0; row < renderedImage.GetHeight(); ++row )
     {
-        for ( unsigned col = 0; col < renderedImage.GetWidth(); ++col )
+        Ray ray;
+        ray.position = cam.position;
+        for ( int col = 0; col < (int)renderedImage.GetWidth(); ++col )
         {
             glm::vec3 imagePlanePos = UL + dV * (float)row + dU * (float)col;
             ray.direction           = glm::normalize( imagePlanePos - ray.position );
@@ -51,7 +54,6 @@ void PathTracer::Render( Scene* scene )
             IntersectionData hitData;
             if ( scene->Intersect( ray, hitData ) )
             {
-
                 pixelColor = Illuminate( scene, ray, hitData );
             }
             else
@@ -62,6 +64,8 @@ void PathTracer::Render( Scene* scene )
             renderedImage.SetPixel( row, col, pixelColor );
         }
     }
+
+    std::cout << "Rendered scene in " << Time::GetDuration( timeStart ) << " ms" << std::endl;
 }
 
 bool PathTracer::SaveImage( const std::string& filename ) const

@@ -1,0 +1,39 @@
+{
+    "OutputImageData": {
+        "resolution": [ 1000, 1000 ],
+        "filename": "jsonImg.png"
+    },
+    "Camera": {
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 0, 0, 0 ],
+        "vfov": 45,
+        "aspectRatio": 1.777777777
+    },
+    "BackgroundColor": {
+        "color": [ 0.2, 0.2, 0.2 ]
+    },
+    "PointLight": {
+        "position": [ 0, 5, -10 ],
+        "color": [ 10, 10, 10 ]
+    },
+    "Sphere": {
+        "position": [ -4, 0, -10 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "position": [ -2, 0, -10 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "position": [ 0, 0, -10 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "position": [ 2, 0, -10 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "position": [ 4, 0, -10 ],
+        "radius": 1
+    }
+}

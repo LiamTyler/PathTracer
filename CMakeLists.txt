@@ -1,9 +1,14 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.9)
 
 project(PathTracer LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(OpenMP)
+if(NOT OpenMP_CXX_FOUND)
+    message( "OpenMP not found! Rendering will be single threaded" )
+endif()
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib )
@@ -49,6 +54,11 @@ set(
     src/scene.hpp
     src/shapes.hpp
     
+    src/utils/json_parsing.cpp
+    src/utils/json_parsing.hpp
+    src/utils/time.cpp
+    src/utils/time.hpp
+    
     src/main.cpp
 )
 
@@ -59,6 +69,16 @@ set_target_properties(
     PROPERTIES
     DEBUG_POSTFIX _debug
 )
+set_property(
+    DIRECTORY
+    PROPERTY
+    COMPILE_DEFINITIONS
+    _CRT_SECURE_NO_WARNINGS
+)
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(pathTracer PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 if(MSVC)
     # Enable object level parallelism during build
