@@ -42,6 +42,7 @@ set(
     src/intersection_tests.hpp
     src/lights.cpp
     src/lights.hpp
+    src/math.hpp
     src/path_tracer.cpp
     src/path_tracer.hpp
     src/scene.cpp

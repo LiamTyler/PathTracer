@@ -9,6 +9,7 @@ int main( int argc, char** argv )
     if ( argc != 3 )
     {
         std::cout << "Usage: pathTracer INPUT_FILE OUTPUT_IMAGE" << std::endl;
+        return 0;
     }
 
     Scene scene;
@@ -19,7 +20,7 @@ int main( int argc, char** argv )
     }
 
     PathTracer pathTracer;
-    pathTracer.InitImage( 800, 800 );
+    pathTracer.InitImage( 1280, 720 );
     pathTracer.Render( &scene );
 
     if ( !pathTracer.SaveImage( argv[2] ) )
