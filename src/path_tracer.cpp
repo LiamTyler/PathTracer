@@ -33,7 +33,7 @@ void PathTracer::Render( Scene* scene )
     assert( renderedImage.GetPixels() );
     Camera& cam = scene->camera;
 
-    float halfHeight = std::tanf( cam.vfov / 2 );
+    float halfHeight = std::tan( cam.vfov / 2 );
     float halfWidth  = halfHeight * cam.aspectRatio;
     glm::vec3 UL     = cam.position + cam.GetViewDir() + halfHeight * cam.GetUpDir() - halfWidth * cam.GetRightDir();
     glm::vec3 dU     = cam.GetRightDir() * (2 * halfWidth  / renderedImage.GetWidth());

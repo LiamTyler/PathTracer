@@ -1,4 +1,5 @@
 #include "intersection_tests.hpp"
+#include <cmath>
 
 namespace PT
 {
@@ -23,7 +24,7 @@ bool RaySphere( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec
         return false;
     }
 
-    float d = std::sqrtf( disc );
+    float d = std::sqrt( disc );
     t = -b - d;
     if ( t < 0 )
     {

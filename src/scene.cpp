@@ -89,10 +89,10 @@ bool Scene::Load( const std::string& filename )
 
 bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
-    float closestTime         = FLT_MAX;
-    size_t closestSphereIndex = ~0;
+    float closestTime      = FLT_MAX;
+    int closestSphereIndex = -1;
     float t;
-    for ( size_t i = 0; i < spheres.size(); ++i )
+    for ( int i = 0; i < (int)spheres.size(); ++i )
     {
         const Sphere& s = spheres[i];
         if ( intersect::RaySphere( ray.position, ray.direction, s.position, s.radius, t ) )
@@ -105,7 +105,7 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
         }
     }
 
-    if ( closestSphereIndex != ~0 )
+    if ( closestSphereIndex != -1 )
     {
         hitData.t        = closestTime;
         hitData.sphere   = &spheres[closestSphereIndex];
