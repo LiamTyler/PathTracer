@@ -7,16 +7,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenMP)
 if(NOT OpenMP_CXX_FOUND)
-    message( "OpenMP not found! Rendering will be single threaded" )
+    message("OpenMP not found! Rendering will be single threaded")
 endif()
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin )
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib )
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib)
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin )
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib )
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib)
 
 if (UNIX)
     #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wno-implicit-fallthrough -Wshadow -Wno-unused-variable -Wno-unused-function")
@@ -54,6 +54,11 @@ set(
     src/scene.hpp
     src/shapes.hpp
     
+    src/resource/material.hpp
+    src/resource/resource.hpp
+    src/resource/resource_manager.cpp
+    src/resource/resource_manager.hpp
+    
     src/utils/json_parsing.cpp
     src/utils/json_parsing.hpp
     src/utils/time.cpp
@@ -68,12 +73,6 @@ set_target_properties(
     pathTracer
     PROPERTIES
     DEBUG_POSTFIX _debug
-)
-set_property(
-    DIRECTORY
-    PROPERTY
-    COMPILE_DEFINITIONS
-    _CRT_SECURE_NO_WARNINGS
 )
 
 if(OpenMP_CXX_FOUND)
@@ -93,4 +92,11 @@ if(MSVC)
     
     # Set this executable as the startup project in msvc
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT pathTracer)
+    
+    set_property(
+        DIRECTORY
+        PROPERTY
+        COMPILE_DEFINITIONS
+        _CRT_SECURE_NO_WARNINGS
+    )
 endif()

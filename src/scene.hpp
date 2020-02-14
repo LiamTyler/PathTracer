@@ -2,12 +2,22 @@
 
 #include "camera.hpp"
 #include "lights.hpp"
+#include "resource/material.hpp"
 #include "shapes.hpp"
 #include <string>
 #include <vector>
 
 namespace PT
 {
+
+struct IntersectionData
+{
+    Sphere* sphere;
+    glm::vec3 position;
+    glm::vec3 normal;
+    std::shared_ptr< Material > material;
+    float t;
+};
 
 class Scene
 {

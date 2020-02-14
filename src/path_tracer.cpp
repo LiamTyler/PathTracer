@@ -21,7 +21,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
         L /= dist;
         float attenuation = 1.0f / ( dist * dist );
 
-        color += attenuation * light.color * hitData.color * std::max( glm::dot( hitData.normal, L ), 0.0f );
+        color += attenuation * light.color * hitData.material->albedo * std::max( glm::dot( hitData.normal, L ), 0.0f );
     }
 
     return color;

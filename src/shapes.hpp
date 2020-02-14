@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "resource/material.hpp"
 
 namespace PT
 {
@@ -25,6 +26,7 @@ struct Ray
 
 struct Sphere
 {
+    std::shared_ptr< Material > material;
     glm::vec3 position;
     float radius;
 
@@ -32,15 +34,6 @@ struct Sphere
     {
         return glm::normalize( p - position );
     }
-};
-
-struct IntersectionData
-{
-    Sphere* sphere;
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec3 color;
-    float t;
 };
 
 } // namespace PT

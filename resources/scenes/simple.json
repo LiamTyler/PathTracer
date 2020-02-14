@@ -1,7 +1,7 @@
 {
     "OutputImageData": {
         "resolution": [ 1000, 1000 ],
-        "filename": "jsonImg.png"
+        "filename": "output.png"
     },
     "Camera": {
         "position": [ 0, 0, 0 ],
@@ -16,24 +16,33 @@
         "position": [ 0, 5, -10 ],
         "color": [ 10, 10, 10 ]
     },
+    "Material": {
+        "name": "red",
+        "albedo": [ 1, 0, 0 ]
+    },
     "Sphere": {
         "position": [ -4, 0, -10 ],
-        "radius": 1
+        "radius": 1,
+        "material": "red"
     },
     "Sphere": {
         "position": [ -2, 0, -10 ],
-        "radius": 1
+        "radius": 1,
+        "material": "red"
     },
     "Sphere": {
         "position": [ 0, 0, -10 ],
-        "radius": 1
+        "radius": 1,
+        "material": "red"
     },
     "Sphere": {
         "position": [ 2, 0, -10 ],
-        "radius": 1
+        "radius": 1,
+        "material": "red"
     },
     "Sphere": {
         "position": [ 4, 0, -10 ],
-        "radius": 1
+        "radius": 1,
+        "material": "red"
     }
 }

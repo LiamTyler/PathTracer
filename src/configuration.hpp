@@ -5,5 +5,5 @@
  * cmake is run again, careful when editing.
  */
 
-#define ROOT_DIR "/home/liam/Documents/PathTracer/"
-#define RESOURCE_DIR "/home/liam/Documents/PathTracer/resources/"
+#define ROOT_DIR "C:/Users/Liam Tyler/Documents/PathTracer/"
+#define RESOURCE_DIR "C:/Users/Liam Tyler/Documents/PathTracer/resources/"

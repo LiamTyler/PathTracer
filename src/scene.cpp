@@ -1,5 +1,6 @@
 #include "scene.hpp"
 #include "intersection_tests.hpp"
+#include "resource/resource_manager.hpp"
 #include "utils/json_parsing.hpp"
 
 namespace PT
@@ -25,6 +26,19 @@ static void ParseCamera( rapidjson::Value& v, Scene* scene )
     mapping.ForEachMember( v, camera );
 }
 
+static void ParseMaterial( rapidjson::Value& v, Scene* scene )
+{
+    auto mat = std::make_shared< Material >();
+    static FunctionMapper< void, Material& > mapping(
+    {
+        { "name",   []( rapidjson::Value& v, Material& mat ) { mat.name   = v.GetString(); } },
+        { "albedo", []( rapidjson::Value& v, Material& mat ) { mat.albedo = ParseVec3( v ); } },
+    });
+
+    mapping.ForEachMember( v, *mat );
+    ResourceManager::AddMaterial( mat );
+}
+
 static void ParsePointLight( rapidjson::Value& value, Scene* scene )
 {
     static FunctionMapper< void, PointLight& > mapping(
@@ -43,6 +57,7 @@ static void ParseSphere( rapidjson::Value& value, Scene* scene )
     {
         { "position", []( rapidjson::Value& v, Sphere& s ) { s.position = ParseVec3( v ); } },
         { "radius",   []( rapidjson::Value& v, Sphere& s ) { s.radius   = ParseNumber< float >( v ); } },
+        { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
     });
 
     scene->spheres.push_back( {} );
@@ -77,6 +92,7 @@ bool Scene::Load( const std::string& filename )
     {
         { "BackgroundColor", ParseBackgroundColor },
         { "Camera",          ParseCamera },
+        { "Material",        ParseMaterial },
         { "PointLight",      ParsePointLight },
         { "Sphere",          ParseSphere },
         { "OutputImageData", ParseOutputImageData },
@@ -107,11 +123,14 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 
     if ( closestSphereIndex != -1 )
     {
+        Sphere& s        = spheres[closestSphereIndex];
         hitData.t        = closestTime;
-        hitData.sphere   = &spheres[closestSphereIndex];
-        hitData.color    = glm::vec3( 1, 0, 0 );
+        hitData.sphere   = &s;
+        hitData.material = s.material;
         hitData.position = ray.Evaluate( hitData.t );
-        hitData.normal   = spheres[closestSphereIndex].GetNormal( hitData.position );
+        hitData.normal   = s.GetNormal( hitData.position );
+        assert( s.material );
+
         return true;
     }
 
