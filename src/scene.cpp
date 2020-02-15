@@ -21,6 +21,8 @@ static void ParseCamera( rapidjson::Value& v, Scene* scene )
         { "rotation",    []( rapidjson::Value& v, Camera& camera ) { camera.rotation    = glm::radians( ParseVec3( v ) ); } },
         { "vfov",        []( rapidjson::Value& v, Camera& camera ) { camera.vfov        = glm::radians( ParseNumber< float >( v ) ); } },
         { "aspectRatio", []( rapidjson::Value& v, Camera& camera ) { camera.aspectRatio = ParseNumber< float >( v ); } },
+        { "exposure",    []( rapidjson::Value& v, Camera& camera ) { camera.exposure    = ParseNumber< float >( v ); } },
+        { "gamma",       []( rapidjson::Value& v, Camera& camera ) { camera.gamma       = ParseNumber< float >( v ); } },
     });
 
     mapping.ForEachMember( v, camera );
@@ -126,7 +128,7 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
         Sphere& s        = spheres[closestSphereIndex];
         hitData.t        = closestTime;
         hitData.sphere   = &s;
-        hitData.material = s.material;
+        hitData.material = s.material.get();
         hitData.position = ray.Evaluate( hitData.t );
         hitData.normal   = s.GetNormal( hitData.position );
         assert( s.material );

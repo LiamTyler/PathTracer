@@ -44,3 +44,19 @@ inline std::istream& operator>>( std::istream& in, glm::vec4& v )
 {
     return in >> v.x >> v.y >> v.z >> v.w;
 }
+
+namespace PT
+{
+
+struct Ray
+{
+    Ray() = default;
+    Ray( const glm::vec3& pos, const glm::vec3& dir );
+
+    glm::vec3 Evaluate( float t ) const;
+
+    glm::vec3 position;
+    glm::vec3 direction;
+};
+
+}

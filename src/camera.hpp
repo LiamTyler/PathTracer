@@ -16,6 +16,8 @@ public:
     glm::vec3 rotation = glm::vec3( 0 );
     float vfov         = glm::radians( 45.0f );
     float aspectRatio  = 16.0f / 9.0f;
+    float exposure     = 1.0f;
+    float gamma        = 1.0f;
 
     glm::vec3 GetViewDir() const;
     glm::vec3 GetUpDir() const;

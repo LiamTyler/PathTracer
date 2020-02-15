@@ -7,7 +7,9 @@
         "position": [ 0, 0, 0 ],
         "rotation": [ 0, 0, 0 ],
         "vfov": 45,
-        "aspectRatio": 1.777777777
+        "aspectRatio": 1,
+        "exposure": 1.0,
+        "gamma": 1.0
     },
     "BackgroundColor": {
         "color": [ 0.2, 0.2, 0.2 ]

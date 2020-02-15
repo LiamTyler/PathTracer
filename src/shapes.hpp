@@ -6,24 +6,6 @@
 namespace PT
 {
 
-struct Ray
-{
-    Ray() = default;
-    Ray( const glm::vec3& pos, const glm::vec3& dir ) :
-        position( pos ),
-        direction( dir )
-    {
-    }
-
-    glm::vec3 Evaluate( float t ) const
-    {
-        return position + t * direction;
-    }
-
-    glm::vec3 position;
-    glm::vec3 direction;
-};
-
 struct Sphere
 {
     std::shared_ptr< Material > material;

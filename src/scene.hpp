@@ -15,7 +15,7 @@ struct IntersectionData
     Sphere* sphere;
     glm::vec3 position;
     glm::vec3 normal;
-    std::shared_ptr< Material > material;
+    Material* material;
     float t;
 };
 

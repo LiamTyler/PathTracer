@@ -45,7 +45,7 @@ void PathTracer::Render( Scene* scene )
     {
         Ray ray;
         ray.position = cam.position;
-        for ( int col = 0; col < (int)renderedImage.GetWidth(); ++col )
+        for ( int col = 0; col < renderedImage.GetWidth(); ++col )
         {
             glm::vec3 imagePlanePos = UL + dV * (float)row + dU * (float)col;
             ray.direction           = glm::normalize( imagePlanePos - ray.position );
@@ -66,6 +66,16 @@ void PathTracer::Render( Scene* scene )
     }
 
     std::cout << "Rendered scene in " << Time::GetDuration( timeStart ) << " ms" << std::endl;
+    
+    // apply tonemapping and gamma correction
+    // renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )
+    //     {
+    //         glm::vec3 hdrColor       = cam.exposure * pixel;
+    //         glm::vec3 tonemapped     = hdrColor / ( glm::vec3( 1 ) + hdrColor );
+    //         glm::vec3 gammaCorrected = glm::pow( tonemapped, glm::vec3( 1.0f / cam.gamma ) );
+    //         return gammaCorrected;
+    //     }
+    // );
 }
 
 bool PathTracer::SaveImage( const std::string& filename ) const

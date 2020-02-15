@@ -100,7 +100,7 @@ namespace PT
 
         return true;
     }
-
+    
     glm::vec3 Image::GetPixel( int r, int c ) const
     {
         assert( m_pixels );

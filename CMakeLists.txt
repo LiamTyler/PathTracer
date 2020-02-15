@@ -47,6 +47,7 @@ set(
     src/intersection_tests.hpp
     src/lights.cpp
     src/lights.hpp
+    src/math.cpp
     src/math.hpp
     src/path_tracer.cpp
     src/path_tracer.hpp
