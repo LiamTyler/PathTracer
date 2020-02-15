@@ -59,4 +59,4 @@ struct Ray
     glm::vec3 direction;
 };
 
-}
+} // namespace PT

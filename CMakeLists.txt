@@ -38,9 +38,12 @@ include_directories(
 
 set(
     SRC_FILES
+    src/anti_aliasing.cpp
+    src/anti_aliasing.hpp
     src/camera.cpp
     src/camera.hpp
     src/configuration.hpp
+    src/core_defines.hpp
     src/image.cpp
     src/image.hpp
     src/intersection_tests.cpp
@@ -62,6 +65,8 @@ set(
     
     src/utils/json_parsing.cpp
     src/utils/json_parsing.hpp
+    src/utils/random.cpp
+    src/utils/random.hpp
     src/utils/time.cpp
     src/utils/time.hpp
     

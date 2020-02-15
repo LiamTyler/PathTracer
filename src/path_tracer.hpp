@@ -1,7 +1,7 @@
 #pragma once
 
-#include "scene.hpp"
 #include "image.hpp"
+#include "scene.hpp"
 
 namespace PT
 {

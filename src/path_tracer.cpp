@@ -1,13 +1,18 @@
 #include "path_tracer.hpp"
+#include "core_defines.hpp"
 #include "glm/ext.hpp"
+#include "utils/random.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
+
+#define TONEMAP_AND_GAMMA NOT_IN_USE
 
 namespace PT
 {
 
 void PathTracer::InitImage( int width, int height )
 {
+    Random::SetSeed( time( NULL ) );
     renderedImage = Image( width, height );
 }
 
@@ -27,6 +32,22 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     return color;
 }
 
+glm::vec3 ShootRay( const Ray& ray, Scene* scene )
+{
+    glm::vec3 pixelColor;
+    IntersectionData hitData;
+    if ( scene->Intersect( ray, hitData ) )
+    {
+        pixelColor = Illuminate( scene, ray, hitData );
+    }
+    else
+    {
+        pixelColor = scene->backgroundColor;
+    }
+
+    return pixelColor;
+}
+
 void PathTracer::Render( Scene* scene )
 {
     auto timeStart = Time::GetTimePoint();
@@ -40,6 +61,9 @@ void PathTracer::Render( Scene* scene )
     glm::vec3 dV     = -cam.GetUpDir()   * (2 * halfHeight / renderedImage.GetHeight());
     UL               += 0.5f * (dU + dV); // move to center of pixel
 
+    auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
+    auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
+
     #pragma omp parallel for
     for ( int row = 0; row < renderedImage.GetHeight(); ++row )
     {
@@ -48,34 +72,32 @@ void PathTracer::Render( Scene* scene )
         for ( int col = 0; col < renderedImage.GetWidth(); ++col )
         {
             glm::vec3 imagePlanePos = UL + dV * (float)row + dU * (float)col;
-            ray.direction           = glm::normalize( imagePlanePos - ray.position );
 
-            glm::vec3 pixelColor;
-            IntersectionData hitData;
-            if ( scene->Intersect( ray, hitData ) )
+            // do anti-aliasing by shooting more than 1 ray through the pixel in various directions
+            glm::vec3 totalColor = glm::vec3( 0 );
+            for ( int rayCounter = 0; rayCounter < antiAliasIterations; ++rayCounter )
             {
-                pixelColor = Illuminate( scene, ray, hitData );
-            }
-            else
-            {
-                pixelColor = scene->backgroundColor;
+                glm::vec3 antiAliasedPos = antiAliasAlg( rayCounter, imagePlanePos, dU, dV );
+                ray.direction            = glm::normalize( antiAliasedPos - ray.position );
+                totalColor              += ShootRay( ray, scene );
             }
 
-            renderedImage.SetPixel( row, col, pixelColor );
+            renderedImage.SetPixel( row, col, totalColor / (float)antiAliasIterations );
         }
     }
 
     std::cout << "Rendered scene in " << Time::GetDuration( timeStart ) << " ms" << std::endl;
     
-    // apply tonemapping and gamma correction
-    // renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )
-    //     {
-    //         glm::vec3 hdrColor       = cam.exposure * pixel;
-    //         glm::vec3 tonemapped     = hdrColor / ( glm::vec3( 1 ) + hdrColor );
-    //         glm::vec3 gammaCorrected = glm::pow( tonemapped, glm::vec3( 1.0f / cam.gamma ) );
-    //         return gammaCorrected;
-    //     }
-    // );
+#if USING( TONEMAP_AND_GAMMA )
+    renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )
+        {
+            glm::vec3 hdrColor       = cam.exposure * pixel;
+            glm::vec3 tonemapped     = hdrColor / ( glm::vec3( 1 ) + hdrColor );
+            glm::vec3 gammaCorrected = glm::pow( tonemapped, glm::vec3( 1.0f / cam.gamma ) );
+            return gammaCorrected;
+        }
+    );
+#endif // #if USING( TONEMAP_AND_GAMMA )
 }
 
 bool PathTracer::SaveImage( const std::string& filename ) const

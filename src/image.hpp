@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
 #include "glm/glm.hpp"
 #include <functional>
+#include <string>
 
 namespace PT
 {

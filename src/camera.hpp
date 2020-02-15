@@ -1,5 +1,6 @@
 #pragma once
 
+#include "anti_aliasing.hpp"
 #include "math.hpp"
 
 namespace PT
@@ -18,6 +19,8 @@ public:
     float aspectRatio  = 16.0f / 9.0f;
     float exposure     = 1.0f;
     float gamma        = 1.0f;
+
+    AntiAlias::Algorithm aaAlgorithm = AntiAlias::Algorithm::NONE;
 
     glm::vec3 GetViewDir() const;
     glm::vec3 GetUpDir() const;

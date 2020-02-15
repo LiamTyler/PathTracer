@@ -9,7 +9,8 @@
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
-        "gamma": 1.0
+        "gamma": 1.0,
+        "antialiasing": "REGULAR_2X2_GRID"
     },
     "BackgroundColor": {
         "color": [ 0.2, 0.2, 0.2 ]
