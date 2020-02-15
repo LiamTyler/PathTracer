@@ -2,6 +2,7 @@
 
 #include "glm/glm.hpp"
 #include "resource/material.hpp"
+#include <memory>
 
 namespace PT
 {
