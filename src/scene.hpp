@@ -23,6 +23,7 @@ class Scene
 {
 public:
     Scene() = default;
+    ~Scene();
 
     bool Load( const std::string& filename );
 
@@ -30,7 +31,7 @@ public:
     
     Camera camera;
     std::vector< Sphere > spheres;
-    std::vector< PointLight > pointLights;
+    std::vector< Light* > lights;
     glm::vec3 backgroundColor       = glm::vec3( 0.1f );
     std::string outputImageFilename = "rendered.png";
     glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );

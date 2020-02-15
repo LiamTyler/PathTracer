@@ -16,8 +16,12 @@
         "color": [ 0.2, 0.2, 0.2 ]
     },
     "PointLight": {
-        "position": [ 0, 5, -10 ],
+        "position": [ 0, -8, -10 ],
         "color": [ 10, 10, 10 ]
+    },
+    "DirectionalLight": {
+        "direction": [ 0, -1, 0 ],
+        "color": [ 0.2, 0.2, 0.2 ]
     },
     "Material": {
         "name": "red",

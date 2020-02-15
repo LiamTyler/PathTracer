@@ -6,6 +6,14 @@
 namespace PT
 {
 
+Scene::~Scene()
+{
+    for ( auto light : lights )
+    {
+        delete light;
+    }
+}
+
 static void ParseBackgroundColor( rapidjson::Value& v, Scene* scene )
 {
     auto& member           = v["color"];
@@ -44,14 +52,26 @@ static void ParseMaterial( rapidjson::Value& v, Scene* scene )
 
 static void ParsePointLight( rapidjson::Value& value, Scene* scene )
 {
-    static FunctionMapper< void, PointLight& > mapping(
+    static FunctionMapper< void, PointLight* > mapping(
     {
-        { "color",    []( rapidjson::Value& v, PointLight& l ) { l.color    = ParseVec3( v ); } },
-        { "position", []( rapidjson::Value& v, PointLight& l ) { l.position = ParseVec3( v ); } },
+        { "color",    []( rapidjson::Value& v, PointLight* l ) { l->color    = ParseVec3( v ); } },
+        { "position", []( rapidjson::Value& v, PointLight* l ) { l->position = ParseVec3( v ); } },
     });
 
-    scene->pointLights.push_back( {} );
-    mapping.ForEachMember( value, scene->pointLights[scene->pointLights.size() - 1] );
+    scene->lights.push_back( new PointLight );
+    mapping.ForEachMember( value, (PointLight*)scene->lights[scene->lights.size() - 1] );
+}
+
+static void ParseDirectionalLight( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, DirectionalLight* > mapping(
+    {
+        { "color",     []( rapidjson::Value& v, DirectionalLight* l ) { l->color     = ParseVec3( v ); } },
+        { "direction", []( rapidjson::Value& v, DirectionalLight* l ) { l->direction = glm::normalize( ParseVec3( v ) ); } },
+    });
+
+    scene->lights.push_back( new DirectionalLight );
+    mapping.ForEachMember( value, (DirectionalLight*)scene->lights[scene->lights.size() - 1] );
 }
 
 static void ParseSphere( rapidjson::Value& value, Scene* scene )
@@ -93,12 +113,13 @@ bool Scene::Load( const std::string& filename )
 
     static FunctionMapper< void, Scene* > mapping(
     {
-        { "BackgroundColor", ParseBackgroundColor },
-        { "Camera",          ParseCamera },
-        { "Material",        ParseMaterial },
-        { "PointLight",      ParsePointLight },
-        { "Sphere",          ParseSphere },
-        { "OutputImageData", ParseOutputImageData },
+        { "BackgroundColor",  ParseBackgroundColor },
+        { "Camera",           ParseCamera },
+        { "Material",         ParseMaterial },
+        { "PointLight",       ParsePointLight },
+        { "DirectionalLight", ParseDirectionalLight },
+        { "Sphere",           ParseSphere },
+        { "OutputImageData",  ParseOutputImageData },
     });
 
     mapping.ForEachMember( document, this );
