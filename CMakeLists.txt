@@ -33,6 +33,7 @@ configure_file(cmake/configuration.hpp.in ${CMAKE_SOURCE_DIR}/src/configuration.
 
 include_directories(
     ext/
+    ext/assimp/include
     src/
 )
 
@@ -73,7 +74,6 @@ set(
     src/main.cpp
 )
 
-
 add_executable(pathTracer ${SRC_FILES})
 set_target_properties(
     pathTracer
@@ -81,8 +81,24 @@ set_target_properties(
     DEBUG_POSTFIX _debug
 )
 
+set(ASSIMP_BUILD_TESTS        OFF CACHE BOOL " " FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL " " FORCE)
+# disable a bunch of importers that we wont use. Just add
+# them to the list if you want it enabled again
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL " " FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER     ON CACHE BOOL "Enable format OBJ"     FORCE)
+set(ASSIMP_BUILD_FBX_IMPORTER     ON CACHE BOOL "Enable format FBX"     FORCE)
+set(ASSIMP_BUILD_3DS_IMPORTER     ON CACHE BOOL "Enable format 3DS"     FORCE)
+set(ASSIMP_BUILD_COLLADA_IMPORTER ON CACHE BOOL "Enable format COLLADA" FORCE)
+set(ASSIMP_BUILD_STL_IMPORTER     ON CACHE BOOL "Enable format STL"     FORCE)
+set(ASSIMP_BUILD_GLTF_IMPORTER    ON CACHE BOOL "Enable format GLTF"    FORCE)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL " " FORCE)
+# assimp doesnt compile if all exporters are disabled -.-
+set(ASSIMP_BUILD_OBJ_EXPORTER    ON CACHE BOOL "Enable format OBJ"    FORCE)
+add_subdirectory(ext/assimp)
+
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(pathTracer PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(pathTracer PUBLIC OpenMP::OpenMP_CXX assimp)
 endif()
 
 if(MSVC)
