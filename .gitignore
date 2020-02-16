@@ -3,6 +3,7 @@ build_debug/
 build_release/
 *.swp
 a.out
+src/configuration.hpp
 
 # Prerequisites
 *.d
