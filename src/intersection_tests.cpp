@@ -44,7 +44,7 @@ namespace intersect
         glm::vec3 pvec = glm::cross( v0v2, rayDir );
         float det      = glm::dot( v0v1, pvec );
         // ray and triangle are parallel if det is close to 0
-        if ( fabs( det ) < 0.00001 )
+        if ( fabs( det ) < 0.00000001 )
         {
             return false;
         }

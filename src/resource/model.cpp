@@ -31,7 +31,8 @@ namespace PT
     {
         name = createInfo.name;
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile( createInfo.filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace );
+        const aiScene* scene = importer.ReadFile( createInfo.filename.c_str(),
+            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials );
         if ( !scene )
         {
             std::cout << "Error parsing model file '" << createInfo.filename.c_str() << "': " << importer.GetErrorString() << std::endl;
@@ -126,7 +127,7 @@ namespace PT
         }
     }
 
-    bool Model::IntersectRay( const Ray& ray, IntersectionData& hitData ) const
+    bool Model::IntersectRay( const Ray& ray, IntersectionData& hitData, int& materialIndex ) const
     {
         if ( !intersect::RayAABB( ray.position, glm::vec3( 1.0 ) / ray.direction, aabb.min, aabb.max ) )
         {
@@ -172,7 +173,7 @@ namespace PT
             u                = closestU;
             v                = closestV;
             hitData.normal   = glm::normalize( u * n0 + v * n1 + (1 - u - v) * n2 );
-            hitData.material = materials[m.materialIndex].get();
+            materialIndex    = m.materialIndex;
             return true;
         }
 

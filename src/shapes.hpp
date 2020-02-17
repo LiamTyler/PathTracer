@@ -2,6 +2,8 @@
 
 #include "glm/glm.hpp"
 #include "resource/material.hpp"
+#include "resource/model.hpp"
+#include "transform.hpp"
 #include <memory>
 
 namespace PT
@@ -17,6 +19,13 @@ struct Sphere
     {
         return glm::normalize( p - position );
     }
+};
+
+struct WorldObject
+{
+    Transform transform;
+    std::shared_ptr< Model > model;
+    std::vector< std::shared_ptr< Material > > materials;
 };
 
 } // namespace PT

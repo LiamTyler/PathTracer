@@ -66,7 +66,6 @@ static void ParseModel( rapidjson::Value& v, Scene* scene )
     if ( model->Load( info ) )
     {
         ResourceManager::AddModel( model );
-        scene->models.push_back( model );
     }
 }
 
@@ -123,6 +122,62 @@ static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
     mapping.ForEachMember( value, *scene );
 }
 
+static Transform ParseTransform( rapidjson::Value& value )
+{
+    static FunctionMapper< void, Transform& > mapping(
+    {
+        { "position", []( rapidjson::Value& v, Transform& t ) { t.position = ParseVec3( v ); } },
+        { "rotation", []( rapidjson::Value& v, Transform& t ) { t.rotation = glm::radians( ParseVec3( v ) ); } },
+        { "scale",    []( rapidjson::Value& v, Transform& t ) { t.scale    = ParseVec3( v ); } },
+    });
+    Transform t = { glm::vec3( 0 ), glm::vec3( 0 ), glm::vec3( 1 ) };
+    mapping.ForEachMember( value, t );
+
+    return t;
+}
+
+static void ParseWorldObject( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, WorldObject& > mapping(
+    {
+        { "transform", []( rapidjson::Value& v, WorldObject& o )
+            {
+                o.transform = ParseTransform( v );
+            }
+        },
+        { "model",     []( rapidjson::Value& v, WorldObject& o )
+            {
+                o.model = ResourceManager::GetModel( v.GetString() );
+                assert( o.model );
+            }
+        },
+        { "material",  []( rapidjson::Value& v, WorldObject& o )
+            {
+                auto mat = ResourceManager::GetMaterial( v.GetString() );
+                assert( mat );
+                assert( o.model ); // need to specify model before material
+                o.materials.resize( o.model->meshes.size() );
+                for ( auto& m : o.materials )
+                {
+                    m = mat;
+                }
+            }
+        },
+    });
+
+    WorldObject o;
+    mapping.ForEachMember( value, o );
+    assert( o.model );
+
+    // if no custom materials were specified, use the ones the model was loaded with
+    if ( o.materials.size() == 0 )
+    {
+        o.materials = o.model->materials;
+    }
+    assert( o.materials.size() );
+    scene->worldObjects.push_back( o );
+}
+
 bool Scene::Load( const std::string& filename )
 {
     auto document = ParseJSONFile( filename );
@@ -141,6 +196,7 @@ bool Scene::Load( const std::string& filename )
         { "DirectionalLight", ParseDirectionalLight },
         { "Sphere",           ParseSphere },
         { "OutputImageData",  ParseOutputImageData },
+        { "WorldObject",      ParseWorldObject },
     });
 
     mapping.ForEachMember( document, this );
@@ -150,8 +206,8 @@ bool Scene::Load( const std::string& filename )
 
 bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
-    float closestTime      = FLT_MAX;
-    int closestIndex       = -1;
+    float closestTime = FLT_MAX;
+    int closestIndex  = -1;
     float t;
     for ( int i = 0; i < (int)spheres.size(); ++i )
     {
@@ -169,15 +225,18 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 
     IntersectionData closestData;
     closestData.t = FLT_MAX;
-    for ( int i = 0; i < (int)models.size(); ++i )
+    int materialIndex;
+    for ( int i = 0; i < (int)worldObjects.size(); ++i )
     {
-        const Model& m = *models[i];
-        if ( m.IntersectRay( ray, hitData ) )
+        const WorldObject& o = worldObjects[i];
+        Ray localRay = o.transform.WorldToLocal( ray );
+        if ( o.model->IntersectRay( localRay, hitData, materialIndex ) )
         {
             if ( hitData.t < closestTime )
             {
-                closestTime = hitData.t;
-                closestData = hitData;
+                closestTime          = hitData.t;
+                closestData          = hitData;
+                closestData.material = o.materials[materialIndex].get();
             }
         }
     }
@@ -190,6 +249,10 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
         hitData.position = ray.Evaluate( hitData.t );
         hitData.normal   = s.GetNormal( hitData.position );
         assert( s.material );
+    }
+    else
+    {
+        hitData = closestData;
     }
 
     return closestTime != FLT_MAX;

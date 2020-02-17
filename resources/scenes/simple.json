@@ -4,13 +4,13 @@
         "filename": "output.png"
     },
     "Camera": {
-        "position": [ 0, 0, 10 ],
+        "position": [ 0, 0, 0 ],
         "rotation": [ 0, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
-        "antialiasing": "REGULAR_2X2_GRID"
+        "antialiasing": "NONE"
     },
     "BackgroundColor": {
         "color": [ 0.2, 0.2, 0.2 ]
@@ -21,7 +21,7 @@
     },
     "DirectionalLight": {
         "direction": [ 0, -1, -1 ],
-        "color": [ 0.2, 0.2, 0.2 ]
+        "color": [ 1, 1, 1 ]
     },
     "Material": {
         "name": "red",
@@ -29,7 +29,16 @@
     },
     "Model": {
         "name": "bunny",
-        "filename": "models/bunny.ply"
+        "filename": "models/dragon.obj"
+    },
+    "WorldObject": {
+        "model": "bunny",
+        "material": "red",
+        "transform": {
+            "position": [ 0, 0, -5 ],
+            "rotation": [ 0, 90, 0 ],
+            "scale": [ 2, 2, 2 ]
+        }
     },
     "_Sphere": {
         "position": [ -4, 0, -10 ],

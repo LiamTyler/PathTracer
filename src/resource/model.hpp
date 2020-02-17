@@ -36,7 +36,7 @@ namespace PT
         
         bool Load( const ModelCreateInfo& createInfo );
         void RecalculateNormals();
-        bool IntersectRay( const Ray& ray, IntersectionData& hitData ) const;
+        bool IntersectRay( const Ray& ray, IntersectionData& hitData, int& materialIndex ) const;
         
         AABB aabb;
         std::vector< Mesh > meshes;

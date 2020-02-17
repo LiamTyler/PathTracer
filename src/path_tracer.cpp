@@ -84,7 +84,7 @@ void PathTracer::Render( Scene* scene )
         }
     }
 
-    std::cout << "Rendered scene in " << Time::GetDuration( timeStart ) << " ms" << std::endl;
+    std::cout << "Rendered scene in " << Time::GetDuration( timeStart ) / 1000 << " seconds" << std::endl;
     
 #if USING( TONEMAP_AND_GAMMA )
     renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )

@@ -23,7 +23,7 @@ public:
     
     Camera camera;
     std::vector< Sphere > spheres;
-    std::vector< std::shared_ptr< Model > > models;
+    std::vector< WorldObject > worldObjects;
     std::vector< Light* > lights;
     glm::vec3 backgroundColor       = glm::vec3( 0.1f );
     std::string outputImageFilename = "rendered.png";

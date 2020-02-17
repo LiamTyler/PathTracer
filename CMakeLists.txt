@@ -59,6 +59,8 @@ set(
     src/scene.cpp
     src/scene.hpp
     src/shapes.hpp
+    src/transform.cpp
+    src/transform.hpp
     
     src/resource/material.hpp
     src/resource/model.cpp
