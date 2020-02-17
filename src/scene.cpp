@@ -1,4 +1,5 @@
 #include "scene.hpp"
+#include "configuration.hpp"
 #include "intersection_tests.hpp"
 #include "resource/resource_manager.hpp"
 #include "utils/json_parsing.hpp"
@@ -48,6 +49,25 @@ static void ParseMaterial( rapidjson::Value& v, Scene* scene )
 
     mapping.ForEachMember( v, *mat );
     ResourceManager::AddMaterial( mat );
+}
+
+static void ParseModel( rapidjson::Value& v, Scene* scene )
+{
+    static FunctionMapper< void, ModelCreateInfo& > mapping(
+    {
+        { "name",     []( rapidjson::Value& v, ModelCreateInfo& m ) { m.name     = v.GetString(); } },
+        { "filename", []( rapidjson::Value& v, ModelCreateInfo& m ) { m.filename = RESOURCE_DIR + std::string( v.GetString() ); } },
+    });
+
+    ModelCreateInfo info;
+    mapping.ForEachMember( v, info );
+
+    auto model = std::make_shared< Model >();
+    if ( model->Load( info ) )
+    {
+        ResourceManager::AddModel( model );
+        scene->models.push_back( model );
+    }
 }
 
 static void ParsePointLight( rapidjson::Value& value, Scene* scene )
@@ -116,6 +136,7 @@ bool Scene::Load( const std::string& filename )
         { "BackgroundColor",  ParseBackgroundColor },
         { "Camera",           ParseCamera },
         { "Material",         ParseMaterial },
+        { "Model",            ParseModel },
         { "PointLight",       ParsePointLight },
         { "DirectionalLight", ParseDirectionalLight },
         { "Sphere",           ParseSphere },
@@ -130,7 +151,7 @@ bool Scene::Load( const std::string& filename )
 bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
     float closestTime      = FLT_MAX;
-    int closestSphereIndex = -1;
+    int closestIndex       = -1;
     float t;
     for ( int i = 0; i < (int)spheres.size(); ++i )
     {
@@ -139,26 +160,39 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
         {
             if ( t < closestTime )
             {
-                closestTime        = t;
-                closestSphereIndex = i;
+                closestTime  = t;
+                closestIndex = i;
+            }
+        }
+    }
+    float sphereT = closestTime;
+
+    IntersectionData closestData;
+    closestData.t = FLT_MAX;
+    for ( int i = 0; i < (int)models.size(); ++i )
+    {
+        const Model& m = *models[i];
+        if ( m.IntersectRay( ray, hitData ) )
+        {
+            if ( hitData.t < closestTime )
+            {
+                closestTime = hitData.t;
+                closestData = hitData;
             }
         }
     }
 
-    if ( closestSphereIndex != -1 )
+    if ( sphereT < closestData.t )
     {
-        Sphere& s        = spheres[closestSphereIndex];
+        Sphere& s        = spheres[closestIndex];
         hitData.t        = closestTime;
-        hitData.sphere   = &s;
         hitData.material = s.material.get();
         hitData.position = ray.Evaluate( hitData.t );
         hitData.normal   = s.GetNormal( hitData.position );
         assert( s.material );
-
-        return true;
     }
 
-    return false;
+    return closestTime != FLT_MAX;
 }
 
 } // namespace PT

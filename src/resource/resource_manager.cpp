@@ -5,6 +5,7 @@ namespace PT
 {
 
 static std::unordered_map< std::string, std::shared_ptr< Material > > s_materials;
+static std::unordered_map< std::string, std::shared_ptr< Model > > s_models;
 
 namespace ResourceManager
 {
@@ -12,11 +13,13 @@ namespace ResourceManager
     void Init()
     {
         s_materials.clear();
+        s_models.clear();
     }
 
     void Shutdown()
     {
         s_materials.clear();
+        s_models.clear();
     }
 
     void AddMaterial( std::shared_ptr< Material > mat )
@@ -29,6 +32,18 @@ namespace ResourceManager
     {
         assert( s_materials.find( name ) != s_materials.end() );
         return s_materials[name];
+    }
+
+    void AddModel( std::shared_ptr< Model > model )
+    {
+        assert( model->name != "" );
+        s_models[model->name] = model;
+    }
+
+    std::shared_ptr< Model > GetModel( const std::string& name )
+    {
+        assert( s_models.find( name ) != s_models.end() );
+        return s_models[name];
     }
 
 } // namespace ResourceManager

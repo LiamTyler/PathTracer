@@ -1,6 +1,7 @@
 #include <iostream>
 #include "configuration.hpp"
 #include "path_tracer.hpp"
+#include "resource/resource_manager.hpp"
 #include "utils/time.hpp"
 
 using namespace PT;
@@ -21,7 +22,8 @@ int main( int argc, char** argv )
     {
         std::cout << "Could not load scene file '" << argv[1] << "'" << std::endl;
         return 0;
-    }    
+    }
+    ResourceManager::GetModel( "bunny" )->materials[0]->albedo = glm::vec3( 1, 0, 0 );
     pathTracer.InitImage( scene.imageResolution.x, scene.imageResolution.y );
     std::cout << "Scene loaded + path tracer initialized in: " << Time::GetDuration( sceneStartTime ) << " ms" << std::endl;
     

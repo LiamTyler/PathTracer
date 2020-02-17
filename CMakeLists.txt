@@ -39,6 +39,7 @@ include_directories(
 
 set(
     SRC_FILES
+    src/aabb.hpp
     src/anti_aliasing.cpp
     src/anti_aliasing.hpp
     src/camera.cpp
@@ -60,6 +61,8 @@ set(
     src/shapes.hpp
     
     src/resource/material.hpp
+    src/resource/model.cpp
+    src/resource/model.hpp
     src/resource/resource.hpp
     src/resource/resource_manager.cpp
     src/resource/resource_manager.hpp
@@ -89,6 +92,7 @@ set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL " " FORCE)
 set(ASSIMP_BUILD_OBJ_IMPORTER     ON CACHE BOOL "Enable format OBJ"     FORCE)
 set(ASSIMP_BUILD_FBX_IMPORTER     ON CACHE BOOL "Enable format FBX"     FORCE)
 set(ASSIMP_BUILD_3DS_IMPORTER     ON CACHE BOOL "Enable format 3DS"     FORCE)
+set(ASSIMP_BUILD_PLY_IMPORTER     ON CACHE BOOL "Enable format PLY"     FORCE)
 set(ASSIMP_BUILD_COLLADA_IMPORTER ON CACHE BOOL "Enable format COLLADA" FORCE)
 set(ASSIMP_BUILD_STL_IMPORTER     ON CACHE BOOL "Enable format STL"     FORCE)
 set(ASSIMP_BUILD_GLTF_IMPORTER    ON CACHE BOOL "Enable format GLTF"    FORCE)

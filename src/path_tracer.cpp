@@ -57,7 +57,7 @@ void PathTracer::Render( Scene* scene )
     glm::vec3 UL     = cam.position + cam.GetViewDir() + halfHeight * cam.GetUpDir() - halfWidth * cam.GetRightDir();
     glm::vec3 dU     = cam.GetRightDir() * (2 * halfWidth  / renderedImage.GetWidth());
     glm::vec3 dV     = -cam.GetUpDir()   * (2 * halfHeight / renderedImage.GetHeight());
-    UL               += 0.5f * (dU + dV); // move to center of pixel
+    UL              += 0.5f * (dU + dV); // move to center of pixel
 
     auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
     auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
