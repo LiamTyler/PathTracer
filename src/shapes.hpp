@@ -9,23 +9,28 @@
 namespace PT
 {
 
-struct Sphere
+struct Shape
 {
-    std::shared_ptr< Material > material;
-    glm::vec3 position;
-    float radius;
+    Shape() = default;
 
-    glm::vec3 GetNormal( const glm::vec3& p ) const
-    {
-        return glm::normalize( p - position );
-    }
+    virtual bool Intersect( const Ray& ray, IntersectionData* hitData ) const = 0;
 };
 
-struct WorldObject
+struct Sphere : public Shape
+{
+    std::shared_ptr< Material > material;
+    Transform transform;
+
+    bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
+};
+
+struct ModelInstance : public Shape
 {
     Transform transform;
     std::shared_ptr< Model > model;
     std::vector< std::shared_ptr< Material > > materials;
+
+    bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
 };
 
 } // namespace PT

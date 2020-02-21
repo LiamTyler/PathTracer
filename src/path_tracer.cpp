@@ -62,7 +62,7 @@ void PathTracer::Render( Scene* scene )
     auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
     auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule( dynamic )
     for ( int row = 0; row < renderedImage.GetHeight(); ++row )
     {
         Ray ray;

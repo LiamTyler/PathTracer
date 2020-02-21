@@ -15,10 +15,6 @@
     "BackgroundColor": {
         "color": [ 0.2, 0.2, 0.2 ]
     },
-    "PointLight": {
-        "position": [ 0, -8, -10 ],
-        "color": [ 10, 10, 10 ]
-    },
     "DirectionalLight": {
         "direction": [ 0, -1, -1 ],
         "color": [ 1, 1, 1 ]
@@ -29,9 +25,9 @@
     },
     "Model": {
         "name": "bunny",
-        "filename": "models/dragon.obj"
+        "filename": "models/bunny.ply"
     },
-    "WorldObject": {
+    "_ModelInstance": {
         "model": "bunny",
         "material": "red",
         "transform": {
@@ -40,29 +36,12 @@
             "scale": [ 2, 2, 2 ]
         }
     },
-    "_Sphere": {
-        "position": [ -4, 0, -10 ],
-        "radius": 1,
-        "material": "red"
-    },
-    "_Sphere": {
-        "position": [ -2, 0, -10 ],
-        "radius": 1,
-        "material": "red"
-    },
-    "_Sphere": {
-        "position": [ 0, 0, -10 ],
-        "radius": 1,
-        "material": "red"
-    },
-    "_Sphere": {
-        "position": [ 2, 0, -10 ],
-        "radius": 1,
-        "material": "red"
-    },
-    "_Sphere": {
-        "position": [ 4, 0, -10 ],
-        "radius": 1,
+    "Sphere": {
+        "transform": {
+            "position": [ 0, 0, -10 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 3, 1, 2 ]
+        },
         "material": "red"
     }
 }

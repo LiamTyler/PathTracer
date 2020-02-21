@@ -59,6 +59,7 @@ set(
     src/scene.cpp
     src/scene.hpp
     src/shapes.hpp
+    src/shapes.cpp
     src/transform.cpp
     src/transform.hpp
     

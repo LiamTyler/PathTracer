@@ -10,7 +10,8 @@ namespace intersect
     bool RaySphere( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& spherePos, float radius, float& t )
     {
         glm::vec3 OC = rayPos - spherePos;
-        float b      = glm::dot( OC, rayDir );
+        float a      = glm::dot( rayDir, rayDir );
+        float b      = 2 * glm::dot( OC, rayDir );
         float c      = glm::dot( OC, OC ) - radius * radius;
 
         // exit if ray is outside of sphere (c > 0) and ray is pointing away from sphere (b > 0)
@@ -19,17 +20,17 @@ namespace intersect
             return false;
         }
 
-        float disc = b*b - c;
+        float disc = b*b - 4*a*c;
         if ( disc < 0 )
         {
             return false;
         }
 
         float d = std::sqrt( disc );
-        t = -b - d;
+        t = (-b - d) / (2*a);
         if ( t < 0 )
         {
-            t = -b + d;
+            t = (-b + d) / (2*a);
         }
 
         return true;

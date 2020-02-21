@@ -3,7 +3,6 @@
 #include "camera.hpp"
 #include "lights.hpp"
 #include "resource/material.hpp"
-#include "resource/model.hpp"
 #include "shapes.hpp"
 #include <string>
 #include <vector>
@@ -22,8 +21,7 @@ public:
     bool Intersect( const Ray& ray, IntersectionData& hitData );
     
     Camera camera;
-    std::vector< Sphere > spheres;
-    std::vector< WorldObject > worldObjects;
+    std::vector< std::shared_ptr< Shape > > shapes;
     std::vector< Light* > lights;
     glm::vec3 backgroundColor       = glm::vec3( 0.1f );
     std::string outputImageFilename = "rendered.png";

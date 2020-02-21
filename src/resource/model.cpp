@@ -134,7 +134,6 @@ namespace PT
             return false;
         }
 
-        float closestTime      = FLT_MAX;
         int closestMeshIndex   = -1;
         int closestIndex       = -1;
         float closestU, closestV;
@@ -150,9 +149,9 @@ namespace PT
                 const auto& v2 = mesh.vertices[mesh.indices[i + 2]];
                 if ( intersect::RayTriangle( ray.position, ray.direction, v0, v1, v2, t, u, v ) )
                 {
-                    if ( t < closestTime )
+                    if ( t < hitData.t )
                     {
-                        closestTime        = t;
+                        hitData.t          = t;
                         closestMeshIndex   = meshIdx;
                         closestIndex       = i;
                         closestU           = u;
@@ -165,8 +164,7 @@ namespace PT
         if ( closestIndex != -1 )
         {
             const Mesh& m    = meshes[closestMeshIndex];
-            hitData.t        = closestTime;
-            hitData.position = ray.Evaluate( closestTime );
+            hitData.position = ray.Evaluate( hitData.t );
             const auto& n0   = m.normals[m.indices[closestIndex + 0]];
             const auto& n1   = m.normals[m.indices[closestIndex + 1]];
             const auto& n2   = m.normals[m.indices[closestIndex + 2]];

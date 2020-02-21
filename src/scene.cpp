@@ -15,6 +15,20 @@ Scene::~Scene()
     }
 }
 
+static Transform ParseTransform( rapidjson::Value& value )
+{
+    static FunctionMapper< void, Transform& > mapping(
+    {
+        { "position", []( rapidjson::Value& v, Transform& t ) { t.position = ParseVec3( v ); } },
+        { "rotation", []( rapidjson::Value& v, Transform& t ) { t.rotation = glm::radians( ParseVec3( v ) ); } },
+        { "scale",    []( rapidjson::Value& v, Transform& t ) { t.scale    = ParseVec3( v ); } },
+    });
+    Transform t = { glm::vec3( 0 ), glm::vec3( 0 ), glm::vec3( 1 ) };
+    mapping.ForEachMember( value, t );
+
+    return t;
+}
+
 static void ParseBackgroundColor( rapidjson::Value& v, Scene* scene )
 {
     auto& member           = v["color"];
@@ -97,13 +111,17 @@ static void ParseSphere( rapidjson::Value& value, Scene* scene )
 {
     static FunctionMapper< void, Sphere& > mapping(
     {
-        { "position", []( rapidjson::Value& v, Sphere& s ) { s.position = ParseVec3( v ); } },
-        { "radius",   []( rapidjson::Value& v, Sphere& s ) { s.radius   = ParseNumber< float >( v ); } },
+        { "transform", []( rapidjson::Value& v, Sphere& o )
+            {
+                o.transform = ParseTransform( v );
+            }
+        },
         { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
     });
 
-    scene->spheres.push_back( {} );
-    mapping.ForEachMember( value, scene->spheres[scene->spheres.size() - 1] );
+    auto o = std::make_shared< Sphere >();
+    scene->shapes.push_back( o );
+    mapping.ForEachMember( value, *o );
 }
 
 static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
@@ -122,36 +140,22 @@ static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
     mapping.ForEachMember( value, *scene );
 }
 
-static Transform ParseTransform( rapidjson::Value& value )
+static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
 {
-    static FunctionMapper< void, Transform& > mapping(
+    static FunctionMapper< void, ModelInstance& > mapping(
     {
-        { "position", []( rapidjson::Value& v, Transform& t ) { t.position = ParseVec3( v ); } },
-        { "rotation", []( rapidjson::Value& v, Transform& t ) { t.rotation = glm::radians( ParseVec3( v ) ); } },
-        { "scale",    []( rapidjson::Value& v, Transform& t ) { t.scale    = ParseVec3( v ); } },
-    });
-    Transform t = { glm::vec3( 0 ), glm::vec3( 0 ), glm::vec3( 1 ) };
-    mapping.ForEachMember( value, t );
-
-    return t;
-}
-
-static void ParseWorldObject( rapidjson::Value& value, Scene* scene )
-{
-    static FunctionMapper< void, WorldObject& > mapping(
-    {
-        { "transform", []( rapidjson::Value& v, WorldObject& o )
+        { "transform", []( rapidjson::Value& v, ModelInstance& o )
             {
                 o.transform = ParseTransform( v );
             }
         },
-        { "model",     []( rapidjson::Value& v, WorldObject& o )
+        { "model",     []( rapidjson::Value& v, ModelInstance& o )
             {
                 o.model = ResourceManager::GetModel( v.GetString() );
                 assert( o.model );
             }
         },
-        { "material",  []( rapidjson::Value& v, WorldObject& o )
+        { "material",  []( rapidjson::Value& v, ModelInstance& o )
             {
                 auto mat = ResourceManager::GetMaterial( v.GetString() );
                 assert( mat );
@@ -165,17 +169,17 @@ static void ParseWorldObject( rapidjson::Value& value, Scene* scene )
         },
     });
 
-    WorldObject o;
-    mapping.ForEachMember( value, o );
-    assert( o.model );
+    auto o = std::make_shared< ModelInstance >();
+    scene->shapes.push_back( o );
+    mapping.ForEachMember( value, *o );
+    assert( o->model );
 
     // if no custom materials were specified, use the ones the model was loaded with
-    if ( o.materials.size() == 0 )
+    if ( o->materials.size() == 0 )
     {
-        o.materials = o.model->materials;
+        o->materials = o->model->materials;
     }
-    assert( o.materials.size() );
-    scene->worldObjects.push_back( o );
+    assert( o->materials.size() );
 }
 
 bool Scene::Load( const std::string& filename )
@@ -196,7 +200,7 @@ bool Scene::Load( const std::string& filename )
         { "DirectionalLight", ParseDirectionalLight },
         { "Sphere",           ParseSphere },
         { "OutputImageData",  ParseOutputImageData },
-        { "WorldObject",      ParseWorldObject },
+        { "ModelInstance",    ParseModelInstance },
     });
 
     mapping.ForEachMember( document, this );
@@ -206,56 +210,14 @@ bool Scene::Load( const std::string& filename )
 
 bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
-    float closestTime = FLT_MAX;
-    int closestIndex  = -1;
-    float t;
-    for ( int i = 0; i < (int)spheres.size(); ++i )
-    {
-        const Sphere& s = spheres[i];
-        if ( intersect::RaySphere( ray.position, ray.direction, s.position, s.radius, t ) )
-        {
-            if ( t < closestTime )
-            {
-                closestTime  = t;
-                closestIndex = i;
-            }
-        }
-    }
-    float sphereT = closestTime;
+    hitData.t = FLT_MAX;
 
-    IntersectionData closestData;
-    closestData.t = FLT_MAX;
-    int materialIndex;
-    for ( int i = 0; i < (int)worldObjects.size(); ++i )
+    for ( const auto& shape : shapes )
     {
-        const WorldObject& o = worldObjects[i];
-        Ray localRay = o.transform.WorldToLocal( ray );
-        if ( o.model->IntersectRay( localRay, hitData, materialIndex ) )
-        {
-            if ( hitData.t < closestTime )
-            {
-                closestTime          = hitData.t;
-                closestData          = hitData;
-                closestData.material = o.materials[materialIndex].get();
-            }
-        }
+        shape->Intersect( ray, &hitData );
     }
 
-    if ( sphereT < closestData.t )
-    {
-        Sphere& s        = spheres[closestIndex];
-        hitData.t        = closestTime;
-        hitData.material = s.material.get();
-        hitData.position = ray.Evaluate( hitData.t );
-        hitData.normal   = s.GetNormal( hitData.position );
-        assert( s.material );
-    }
-    else
-    {
-        hitData = closestData;
-    }
-
-    return closestTime != FLT_MAX;
+    return hitData.t != FLT_MAX;
 }
 
 } // namespace PT
