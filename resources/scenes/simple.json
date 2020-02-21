@@ -12,35 +12,52 @@
         "gamma": 1.0,
         "antialiasing": "NONE"
     },
+    "AmbientLight": {
+        "color": [ 0.0, 0.0, 0.0 ]
+    },
     "BackgroundColor": {
         "color": [ 0.2, 0.2, 0.2 ]
     },
     "DirectionalLight": {
-        "direction": [ 0, -1, -1 ],
+        "direction": [ 0, -4, -1 ],
         "color": [ 1, 1, 1 ]
+    },
+    "_PointLight": {
+        "color": [ 10, 10, 10 ],
+        "position": [ 0, 0, -8 ]
+    },
+    "Material": {
+        "name": "floor",
+        "albedo": [ 0.6, 0.6, 0.6 ],
+        "Ks": [ 1, 1, 1],
+        "Ns": 90,
+        "ior": 1
     },
     "Material": {
         "name": "red",
-        "albedo": [ 1, 0, 0 ]
+        "albedo": [ 1, 0, 0 ],
+        "Ks": [ 1, 1, 1 ],
+        "Ns": 40,
+        "ior": 1
     },
     "Model": {
-        "name": "bunny",
-        "filename": "models/dragon.obj"
+        "name": "plane",
+        "filename": "models/plane.obj"
     },
     "ModelInstance": {
-        "model": "bunny",
-        "material": "red",
+        "model": "plane",
+        "material": "floor",
         "transform": {
-            "position": [ 0, 0, -5 ],
-            "rotation": [ 0, 90, 0 ],
-            "scale": [ 2, 2, 2 ]
+            "position": [ 0, -2, -10 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 10, 10, 10 ]
         }
     },
-    "_Sphere": {
+    "Sphere": {
         "transform": {
-            "position": [ 0, 0, -10 ],
+            "position": [ 0, 1, -10 ],
             "rotation": [ 0, 0, 0 ],
-            "scale": [ 4, 2, 3 ]
+            "scale": [ 1, 1, 1 ]
         },
         "material": "red"
     }

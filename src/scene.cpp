@@ -29,6 +29,12 @@ static Transform ParseTransform( rapidjson::Value& value )
     return t;
 }
 
+static void ParseAmbientLight( rapidjson::Value& v, Scene* scene )
+{
+    auto& member        = v["color"];
+    scene->ambientLight = ParseVec3( member );
+}
+
 static void ParseBackgroundColor( rapidjson::Value& v, Scene* scene )
 {
     auto& member           = v["color"];
@@ -60,6 +66,9 @@ static void ParseMaterial( rapidjson::Value& v, Scene* scene )
     {
         { "name",   []( rapidjson::Value& v, Material& mat ) { mat.name   = v.GetString(); } },
         { "albedo", []( rapidjson::Value& v, Material& mat ) { mat.albedo = ParseVec3( v ); } },
+        { "Ks",     []( rapidjson::Value& v, Material& mat ) { mat.Ks     = ParseVec3( v ); } },
+        { "Ns",     []( rapidjson::Value& v, Material& mat ) { mat.Ns     = ParseNumber< float >( v ); } },
+        { "ior",    []( rapidjson::Value& v, Material& mat ) { mat.ior    = ParseNumber< float >( v ); } },
     });
 
     mapping.ForEachMember( v, *mat );
@@ -193,6 +202,7 @@ bool Scene::Load( const std::string& filename )
 
     static FunctionMapper< void, Scene* > mapping(
     {
+        { "AmbientLight",     ParseAmbientLight },
         { "BackgroundColor",  ParseBackgroundColor },
         { "Camera",           ParseCamera },
         { "Material",         ParseMaterial },
