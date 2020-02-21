@@ -3,17 +3,25 @@
 namespace PT
 {
 
-glm::vec3 PointLight::GetLightDirAndAttenuation( const glm::vec3& pos, float& atten ) const
+LightIlluminationInfo PointLight::GetLightIlluminationInfo( const glm::vec3& pos ) const
 {
-    glm::vec3 L = position - pos;
-    float dist  = glm::length( L );
-    atten       = 1.0f / ( dist * dist );
-    return L / dist;
+    LightIlluminationInfo info;
+    info.dirToLight      = position - pos;
+    info.distanceToLight = glm::length( info.dirToLight );
+    info.attenuation     = 1.0f / ( info.distanceToLight * info.distanceToLight );
+    info.dirToLight      = info.dirToLight / info.distanceToLight;
+
+    return info;
 }
 
-glm::vec3 DirectionalLight::GetLightDirAndAttenuation( const glm::vec3& pos, float& atten ) const
+LightIlluminationInfo DirectionalLight::GetLightIlluminationInfo( const glm::vec3& pos ) const
 {
-    atten = 1;
-    return -direction;
+    LightIlluminationInfo info;
+    info.distanceToLight = FLT_MAX;
+    info.attenuation     = 1.0f;
+    info.dirToLight      = -direction;
+
+    return info;
 }
+
 } // namespace PT

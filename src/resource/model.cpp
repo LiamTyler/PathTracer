@@ -151,11 +151,11 @@ namespace PT
                 {
                     if ( t < hitData.t )
                     {
-                        hitData.t          = t;
-                        closestMeshIndex   = meshIdx;
-                        closestIndex       = i;
-                        closestU           = u;
-                        closestV           = v;
+                        hitData.t        = t;
+                        closestMeshIndex = meshIdx;
+                        closestIndex     = i;
+                        closestU         = u;
+                        closestV         = v;
                     }
                 }
             }

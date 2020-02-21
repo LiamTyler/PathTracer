@@ -15,10 +15,10 @@ namespace intersect
         float c      = glm::dot( OC, OC ) - radius * radius;
 
         // exit if ray is outside of sphere (c > 0) and ray is pointing away from sphere (b > 0)
-        if ( c > 0 && b > 0 )
-        {
-            return false;
-        }
+        // if ( c > 0 && b > 0 )
+        // {
+        //     return false;
+        // }
 
         float disc = b*b - 4*a*c;
         if ( disc < 0 )
@@ -33,7 +33,7 @@ namespace intersect
             t = (-b + d) / (2*a);
         }
 
-        return true;
+        return t > 0;
     }
 
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
@@ -68,7 +68,7 @@ namespace intersect
 
         t = glm::dot( v0v2, qvec) * invDet;
 
-        return true;
+        return t > 0;
     }
 
     bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax )

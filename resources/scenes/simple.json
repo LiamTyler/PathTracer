@@ -25,9 +25,9 @@
     },
     "Model": {
         "name": "bunny",
-        "filename": "models/bunny.ply"
+        "filename": "models/dragon.obj"
     },
-    "_ModelInstance": {
+    "ModelInstance": {
         "model": "bunny",
         "material": "red",
         "transform": {
@@ -36,11 +36,11 @@
             "scale": [ 2, 2, 2 ]
         }
     },
-    "Sphere": {
+    "_Sphere": {
         "transform": {
             "position": [ 0, 0, -10 ],
             "rotation": [ 0, 0, 0 ],
-            "scale": [ 3, 1, 2 ]
+            "scale": [ 4, 2, 3 ]
         },
         "material": "red"
     }

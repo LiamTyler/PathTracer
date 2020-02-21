@@ -19,12 +19,22 @@ void PathTracer::InitImage( int width, int height )
 glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitData )
 {
     glm::vec3 color( 0 );
+    IntersectionData shadowHit;
+    Ray shadowRay;
+    shadowRay.position = hitData.position + hitData.normal * 0.0001f;
     for ( const auto& light : scene->lights )
     {
-        float attenuation;
-        glm::vec3 L = light->GetLightDirAndAttenuation( hitData.position, attenuation );
+        LightIlluminationInfo info = light->GetLightIlluminationInfo( hitData.position );
 
-        color += attenuation * light->color * hitData.material->albedo * std::max( glm::dot( hitData.normal, L ), 0.0f );
+        float S             = 1;
+        shadowRay.direction = info.dirToLight;
+        if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t < info.distanceToLight )
+        {
+            S = 0;
+        }
+
+        // diffuse
+        color += S * info.attenuation * light->color * hitData.material->albedo * std::max( glm::dot( hitData.normal, info.dirToLight ), 0.0f );
     }
 
     return color;

@@ -50,6 +50,7 @@ static void ParseCamera( rapidjson::Value& v, Scene* scene )
     });
 
     mapping.ForEachMember( v, camera );
+    camera.UpdateOrientationVectors();
 }
 
 static void ParseMaterial( rapidjson::Value& v, Scene* scene )
@@ -217,7 +218,7 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
         shape->Intersect( ray, &hitData );
     }
 
-    return hitData.t != FLT_MAX;
+    return hitData.t != FLT_MAX && hitData.t > 0;
 }
 
 } // namespace PT
