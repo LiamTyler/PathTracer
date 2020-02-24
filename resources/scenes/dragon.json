@@ -1,0 +1,65 @@
+{
+    "OutputImageData": {
+        "resolution": [ 1000, 1000 ],
+        "filename": "dragon.png"
+    },
+    "Camera": {
+        "position": [ 0, 0, 5 ],
+        "rotation": [ 0, 0, 0 ],
+        "vfov": 45,
+        "aspectRatio": 1,
+        "exposure": 1.0,
+        "gamma": 1.0,
+        "antialiasing": "ROTATED_2X2_GRID"
+    },
+    "AmbientLight": {
+        "color": [ 0.0, 0.0, 0.0 ]
+    },
+    "BackgroundColor": {
+        "color": [ 0.2, 0.2, 0.2 ]
+    },
+    "DirectionalLight": {
+        "direction": [ 0, -4, -1 ],
+        "color": [ 1, 1, 1 ]
+    },
+    "Material": {
+        "name": "floor",
+        "albedo": [ 0.6, 0.6, 0.6 ],
+        "Ks": [ 0.5, 0.5, 0.5 ],
+        "Ns": 90,
+        "ior": 1
+    },
+    "Material": {
+        "name": "green",
+        "albedo": [ 0, 1, 0 ],
+        "Ks": [ 0, 0, 0 ],
+        "Ns": 40,
+        "ior": 1
+    },
+    "Model": {
+        "name": "plane",
+        "filename": "models/plane.obj"
+    },
+    "Model": {
+        "name": "dragon",
+        "filename": "models/dragon.obj"
+    },
+    "ModelInstance": {
+        "model": "plane",
+        "material": "floor",
+        "transform": {
+            "position": [ 0, -2, -10 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 10, 10, 10 ]
+        }
+    },
+    "ModelInstance": {
+        "model": "dragon",
+        "material": "green",
+        "transform": {
+            "position": [ 0, 1, -10 ],
+            "rotation": [ 0, 90, 0 ],
+            "scale": [ 5, 5, 5   ]
+        }
+    }
+}

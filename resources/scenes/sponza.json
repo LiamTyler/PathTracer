@@ -1,0 +1,47 @@
+{
+    "OutputImageData": {
+        "resolution": [ 1000, 1000 ],
+        "filename": "sponza.png"
+    },
+    "Camera": {
+        "_position": [ 0, 0, 5 ],
+        "_rotation": [ 0, 0, 0 ],
+        "position": [ -4, 2, 0 ],
+        "rotation": [ 0, -90, 0 ],
+        "vfov": 45,
+        "aspectRatio": 1,
+        "exposure": 1.0,
+        "gamma": 1.0,
+        "antialiasing": "NONE"
+    },
+    "AmbientLight": {
+        "color": [ 0.0, 0.0, 0.0 ]
+    },
+    "BackgroundColor": {
+        "color": [ 0.2, 0.2, 0.2 ]
+    },
+    "DirectionalLight": {
+        "direction": [ 0, -4, -1 ],
+        "color": [ 1, 1, 1 ]
+    },
+    "Material": {
+        "name": "green",
+        "albedo": [ 0, 1, 0 ],
+        "Ks": [ 0, 0, 0 ],
+        "Ns": 40,
+        "ior": 1
+    },
+    "Model": {
+        "name": "sponza",
+        "filename": "models/sponza.obj"
+    },
+    "ModelInstance": {
+        "model": "sponza",
+        "material": "green",
+        "transform": {
+            "position": [ 0, 0, 0 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 0.01, 0.01, 0.01 ]
+        }
+    }
+}

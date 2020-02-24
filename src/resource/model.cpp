@@ -89,21 +89,16 @@ namespace PT
         Triangle* endTri      = &triangles[0] + end;
         Triangle* midTriangle = std::partition( beginTri, endTri, [dim, mid]( const Triangle& tri ) { return tri.centroid[dim] < mid; } );
         
-        // if the split did nothing
+        // if the split did nothing, fall back to just splitting the nodes equally into two categories
         if ( midTriangle == endTri || midTriangle == beginTri )
         {
-            if ( numTriangles > 4 )
-            {
-                //std::cout << "Split not great, leaf has " << numTriangles << " triangles" << std::endl;
-            }
-            InitLeafNode( node, model, triangles, start, end );
+            midTriangle = &triangles[(start + end) / 2];
+            std::nth_element( beginTri, midTriangle, endTri, [dim]( const Triangle &a, const Triangle &b ) { return a.centroid[dim] < b.centroid[dim]; });
         }
-        else
-        {
-            int cutoff  = start + static_cast< int >( midTriangle - &triangles[start] );
-            node->left  = BuildBVHInteral( model, triangles, start, cutoff );
-            node->right = BuildBVHInteral( model, triangles, cutoff, end );
-        }
+
+        int cutoff  = start + static_cast< int >( midTriangle - &triangles[start] );
+        node->left  = BuildBVHInteral( model, triangles, start, cutoff );
+        node->right = BuildBVHInteral( model, triangles, cutoff, end );
 
         return node;
     }
@@ -205,7 +200,7 @@ namespace PT
                 indices.push_back( face.mIndices[1] + indexOffset );
                 indices.push_back( face.mIndices[2] + indexOffset );
             }
-            indexOffset = static_cast< uint32_t >( indices.size() );
+            indexOffset = static_cast< uint32_t >( vertices.size() );
         }
 
         if ( !ParseMaterials( createInfo.filename, this, scene ) )

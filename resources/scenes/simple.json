@@ -4,13 +4,15 @@
         "filename": "output.png"
     },
     "Camera": {
-        "position": [ 0, 0, 5 ],
-        "rotation": [ 0, 0, 0 ],
+        "_position": [ 0, 0, 5 ],
+        "_rotation": [ 0, 0, 0 ],
+        "position": [ -4, 2, 0 ],
+        "rotation": [ 0, -90, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
-        "antialiasing": "ROTATED_2x2_GRID"
+        "antialiasing": "NONE"
     },
     "AmbientLight": {
         "color": [ 0.0, 0.0, 0.0 ]
@@ -63,7 +65,11 @@
         "name": "dragon",
         "filename": "models/dragon.obj"
     },
-    "ModelInstance": {
+    "Model": {
+        "name": "sponza",
+        "filename": "models/sponza.obj"
+    },
+    "_ModelInstance": {
         "model": "plane",
         "material": "floor",
         "transform": {
@@ -72,13 +78,22 @@
             "scale": [ 10, 10, 10 ]
         }
     },
-    "ModelInstance": {
+    "_ModelInstance": {
         "model": "dragon",
         "material": "green",
         "transform": {
             "position": [ 0, 1, -10 ],
             "rotation": [ 0, 90, 0 ],
             "scale": [ 5, 5, 5   ]
+        }
+    },
+    "ModelInstance": {
+        "model": "sponza",
+        "material": "green",
+        "transform": {
+            "position": [ 0, 0, 0 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 0.01, 0.01, 0.01 ]
         }
     },
     "_Sphere": {
@@ -88,21 +103,5 @@
             "scale": [ 2, 2, 2 ]
         },
         "material": "red"
-    },
-    "_Sphere": {
-        "transform": {
-            "position": [ 2, 1, -10 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 2, 2, 2 ]
-        },
-        "material": "green"
-    },
-    "_Sphere": {
-        "transform": {
-            "position": [ 0, 0, 0 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 1, 1, 1 ]
-        },
-        "material": "glass"
     }
 }

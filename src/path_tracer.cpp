@@ -4,8 +4,11 @@
 #include "utils/random.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
+#include <atomic>
 
 #define TONEMAP_AND_GAMMA NOT_IN_USE
+#define PBSTR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+#define PBWIDTH 60
 
 namespace PT
 {
@@ -106,6 +109,9 @@ void PathTracer::Render( Scene* scene )
     auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
     auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
 
+    std::atomic< int > renderProgress = 0;
+    int onePercent = std::ceil( renderedImage.GetHeight() / 100.0f );
+
     #pragma omp parallel for schedule( dynamic )
     for ( int row = 0; row < renderedImage.GetHeight(); ++row )
     {
@@ -126,9 +132,20 @@ void PathTracer::Render( Scene* scene )
 
             renderedImage.SetPixel( row, col, totalColor / (float)antiAliasIterations );
         }
+
+        int rowsCompleted = ++renderProgress;
+        if ( rowsCompleted % onePercent == 0 )
+        {
+            float progress = rowsCompleted / (float) renderedImage.GetHeight();
+            int val  = (int) (progress * 100);
+            int lpad = (int) (progress * PBWIDTH);
+            int rpad = PBWIDTH - lpad;
+            printf( "\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "" );
+            fflush( stdout );
+        }
     }
 
-    std::cout << "Rendered scene in " << Time::GetDuration( timeStart ) / 1000 << " seconds" << std::endl;
+    std::cout << "\nRendered scene in " << Time::GetDuration( timeStart ) / 1000 << " seconds" << std::endl;
     
 #if USING( TONEMAP_AND_GAMMA )
     renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )

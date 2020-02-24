@@ -1,0 +1,19 @@
+simple BVH (goal of 1 node per leaf):
+------------------------------
+dragon.json: 1.03
+sponza.json: 100.15
+
+simple BVH (goal of <= 2 nodes per leaf)
+------------------------------
+dragon.json: 1.02
+sponza.json: 101.45
+
+simple BVH (goal of <= 3 nodes per leaf)
+------------------------------
+dragon.json: 1.03
+sponza.json: 101.38
+
+simple BVH with equal split fallback (goal of 1 node per leaf)
+------------------------------
+dragon.json: 1.06
+sponza.json: 3.09
