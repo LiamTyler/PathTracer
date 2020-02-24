@@ -3,6 +3,7 @@
 #include "intersection_tests.hpp"
 #include "resource/resource_manager.hpp"
 #include "utils/json_parsing.hpp"
+#include "utils/time.hpp"
 
 namespace PT
 {
@@ -68,6 +69,7 @@ static void ParseMaterial( rapidjson::Value& v, Scene* scene )
         { "albedo", []( rapidjson::Value& v, Material& mat ) { mat.albedo = ParseVec3( v ); } },
         { "Ks",     []( rapidjson::Value& v, Material& mat ) { mat.Ks     = ParseVec3( v ); } },
         { "Ns",     []( rapidjson::Value& v, Material& mat ) { mat.Ns     = ParseNumber< float >( v ); } },
+        { "Tr",     []( rapidjson::Value& v, Material& mat ) { mat.Tr     = ParseVec3( v ); } },
         { "ior",    []( rapidjson::Value& v, Material& mat ) { mat.ior    = ParseNumber< float >( v ); } },
     });
 
@@ -194,6 +196,8 @@ static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
 
 bool Scene::Load( const std::string& filename )
 {
+    auto startTime = Time::GetTimePoint();
+
     auto document = ParseJSONFile( filename );
     if ( document.IsNull() )
     {
@@ -215,6 +219,30 @@ bool Scene::Load( const std::string& filename )
     });
 
     mapping.ForEachMember( document, this );
+
+    // compute some scene statistics
+    size_t numSpheres        = 0;
+    size_t numModelInstances = 0;
+    size_t totalTriangles    = 0;
+    for ( const auto& shape : shapes )
+    {
+        if ( std::dynamic_pointer_cast< Sphere >( shape ) )
+        {
+            numSpheres += 1;
+        }
+        if ( std::dynamic_pointer_cast< ModelInstance >( shape ) )
+        {
+            numModelInstances += 1;
+            totalTriangles += std::dynamic_pointer_cast< ModelInstance >( shape )->model->indices.size() / 3;
+        }
+    }
+    std::cout << "\nScene '" << filename << "' stats:" << std::endl;
+    std::cout << "------------------------------------------------------" << std::endl;
+    std::cout << "Load time: " << Time::GetDuration( startTime ) << " ms" << std::endl;
+    std::cout << "Number of shapes: " << shapes.size() << std::endl;
+    std::cout << "\tSpheres: " << numSpheres << std::endl;
+    std::cout << "\tModelInstances: " << numModelInstances << std::endl;
+    std::cout << "Total number of triangles: " << totalTriangles << std::endl;
 
     return true;
 }

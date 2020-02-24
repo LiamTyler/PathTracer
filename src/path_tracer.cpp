@@ -10,53 +10,77 @@
 namespace PT
 {
 
+glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth );
+
 void PathTracer::InitImage( int width, int height )
 {
     Random::SetSeed( time( NULL ) );
     renderedImage = Image( width, height );
 }
 
-glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitData )
+glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitData, int depth )
 {
-    // ambient
-    glm::vec3 color = hitData.material->albedo * scene->ambientLight;
+    auto N          = hitData.normal;
+    const auto V    = -ray.direction;
+    const auto& mat = *hitData.material;
 
-    IntersectionData shadowHit;
+    // ambient
+    glm::vec3 color = mat.albedo * scene->ambientLight;
+
     for ( const auto& light : scene->lights )
     {
         LightIlluminationInfo info = light->GetLightIlluminationInfo( hitData.position );
         const auto& L = info.dirToLight;
-        const auto& N = hitData.normal;
-        const auto  V = glm::normalize( ray.position - hitData.position );
-
+        
+        IntersectionData shadowHit;
         Ray shadowRay( hitData.position + 0.0001f * N, L );
         if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t < info.distanceToLight )
         {
             continue;
         }
 
-        const auto& mat = *hitData.material;
-        const auto I    = info.attenuation * light->color;
+        const auto I = info.attenuation * light->color;
         // diffuse
         color += I * mat.albedo * std::max( glm::dot( N, L ), 0.0f );
         // specular
         color += I * mat.Ks * std::pow( std::max( 0.0f, glm::dot( V, glm::reflect( -L, N ) ) ), mat.Ns );
     }
 
-    // reflection
+    // reflection & refraction
+    glm::vec3 reflectColor( 0 );
+    glm::vec3 refractColor( 0 );
 
-    // refraction
+    float IOR_current  = 1;
+    float IOR_entering = mat.ior;
+    bool rayOutsideObject = glm::dot( N, ray.direction ) < 0;
+    if ( !rayOutsideObject )
+    {
+        N = -N;
+        std::swap( IOR_current, IOR_entering );
+    }
+    if ( mat.Ks != glm::vec3( 0 ) )
+    {
+        Ray reflectRay( hitData.position + 0.0001f * N, glm::normalize( glm::reflect( ray.direction, N ) ) );
+        reflectColor += mat.Ks * ShootRay( reflectRay, scene, depth + 1 );
+    }
 
+    if ( mat.Tr != glm::vec3( 0 ) )
+    {
+        Ray refractRay( hitData.position - 0.0001f * N, glm::refract( ray.direction, N, IOR_current / IOR_entering ) );
+        refractColor += ShootRay( refractRay, scene, depth + 1 );
+    }
+
+    color += reflectColor + refractColor;
     return color;
 }
 
-glm::vec3 ShootRay( const Ray& ray, Scene* scene )
+glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
 {
     glm::vec3 pixelColor;
     IntersectionData hitData;
-    if ( scene->Intersect( ray, hitData ) )
+    if ( scene->Intersect( ray, hitData ) && depth < 2 )
     {
-        pixelColor = Illuminate( scene, ray, hitData );
+        pixelColor = Illuminate( scene, ray, hitData, depth );
     }
     else
     {
@@ -97,7 +121,7 @@ void PathTracer::Render( Scene* scene )
             {
                 glm::vec3 antiAliasedPos = antiAliasAlg( rayCounter, imagePlanePos, dU, dV );
                 ray.direction            = glm::normalize( antiAliasedPos - ray.position );
-                totalColor              += ShootRay( ray, scene );
+                totalColor              += ShootRay( ray, scene, 0 );
             }
 
             renderedImage.SetPixel( row, col, totalColor / (float)antiAliasIterations );

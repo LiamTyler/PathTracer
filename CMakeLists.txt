@@ -39,6 +39,7 @@ include_directories(
 
 set(
     SRC_FILES
+    src/aabb.cpp
     src/aabb.hpp
     src/anti_aliasing.cpp
     src/anti_aliasing.hpp

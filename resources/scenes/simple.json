@@ -4,13 +4,13 @@
         "filename": "output.png"
     },
     "Camera": {
-        "position": [ 0, 0, 0 ],
+        "position": [ 0, 0, 5 ],
         "rotation": [ 0, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
-        "antialiasing": "NONE"
+        "antialiasing": "ROTATED_2x2_GRID"
     },
     "AmbientLight": {
         "color": [ 0.0, 0.0, 0.0 ]
@@ -29,20 +29,39 @@
     "Material": {
         "name": "floor",
         "albedo": [ 0.6, 0.6, 0.6 ],
-        "Ks": [ 1, 1, 1],
+        "Ks": [ 0.5, 0.5, 0.5 ],
         "Ns": 90,
         "ior": 1
     },
     "Material": {
         "name": "red",
         "albedo": [ 1, 0, 0 ],
-        "Ks": [ 1, 1, 1 ],
+        "Ks": [ 0.4, 0.4, 0.4 ],
         "Ns": 40,
         "ior": 1
+    },
+    "Material": {
+        "name": "green",
+        "albedo": [ 0, 1, 0 ],
+        "Ks": [ 0, 0, 0 ],
+        "Ns": 40,
+        "ior": 1
+    },
+    "Material": {
+        "name": "glass",
+        "albedo": [ 0, 0, 0 ],
+        "Ks": [ 0.1, 0.1, 0.1 ],
+        "Ns": 1,
+        "Tr": [ 1, 1, 1 ],
+        "ior": 1.5
     },
     "Model": {
         "name": "plane",
         "filename": "models/plane.obj"
+    },
+    "Model": {
+        "name": "dragon",
+        "filename": "models/dragon.obj"
     },
     "ModelInstance": {
         "model": "plane",
@@ -53,12 +72,37 @@
             "scale": [ 10, 10, 10 ]
         }
     },
-    "Sphere": {
+    "ModelInstance": {
+        "model": "dragon",
+        "material": "green",
         "transform": {
             "position": [ 0, 1, -10 ],
+            "rotation": [ 0, 90, 0 ],
+            "scale": [ 5, 5, 5   ]
+        }
+    },
+    "_Sphere": {
+        "transform": {
+            "position": [ -2, 1, -10 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 2, 2, 2 ]
+        },
+        "material": "red"
+    },
+    "_Sphere": {
+        "transform": {
+            "position": [ 2, 1, -10 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 2, 2, 2 ]
+        },
+        "material": "green"
+    },
+    "_Sphere": {
+        "transform": {
+            "position": [ 0, 0, 0 ],
             "rotation": [ 0, 0, 0 ],
             "scale": [ 1, 1, 1 ]
         },
-        "material": "red"
+        "material": "glass"
     }
 }
