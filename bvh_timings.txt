@@ -17,3 +17,13 @@ simple BVH with equal split fallback (goal of 1 node per leaf)
 ------------------------------
 dragon.json: 1.06
 sponza.json: 3.09
+
+simple BVH with equal split fallback (goal of 1 node per leaf) + flattened bvh
+------------------------------
+dragon.json: 0.58
+sponza.json: 1.78
+
+simple BVH with equal split fallback (goal of 1 node per leaf) + flattened bvh + reordering index buffer
+------------------------------
+dragon.json: 0.57
+sponza.json: 1.73

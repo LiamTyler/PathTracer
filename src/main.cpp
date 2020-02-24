@@ -13,6 +13,8 @@ int main( int argc, char** argv )
         return 0;
     }
 
+    std::cout << "sizeof bvh node: " << sizeof( BVHNode ) << std::endl;
+
     Scene scene;
     PathTracer pathTracer;
 

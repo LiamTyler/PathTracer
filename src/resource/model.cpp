@@ -9,6 +9,21 @@
 
 namespace PT
 {
+    struct BVHBuildNode
+    {
+        std::unique_ptr< BVHBuildNode > firstChild;
+        std::unique_ptr< BVHBuildNode > secondChild;
+        uint32_t firstIndex;
+        uint32_t numTriangles;
+        AABB aabb;
+    };
+
+    struct Triangle
+    {
+        AABB aabb;
+        glm::vec3 centroid;
+        uint32_t startIndex;
+    };
 
     static bool ParseMaterials( const std::string& filename, Model* model, const aiScene* scene )
     {
@@ -30,22 +45,20 @@ namespace PT
         return true;
     }
 
-    struct Triangle
+    static void InitLeafNode( std::unique_ptr< BVHBuildNode >& node, Model& model, std::vector< Triangle >& triangles, std::vector< uint32_t >& reorderedIndexBuffer, int start, int end )
     {
-        AABB aabb;
-        glm::vec3 centroid;
-        uint32_t startIndex;
-    };
-
-    static void InitLeafNode( std::unique_ptr< BVHNode >& node, Model& model, std::vector< Triangle >& triangles, int start, int end )
-    {
-        int numTriangles = end - start;
-        node->triangles.resize( numTriangles );
-        for ( int i = 0; i < numTriangles; ++i )
+        node->firstIndex = static_cast< uint32_t >( reorderedIndexBuffer.size() );
+        node->numTriangles = end - start;
+        for ( uint32_t i = 0; i < node->numTriangles; ++i )
         {
-            // encode the material index of the triangle into the upper 8 bits of the int so
-            // that it doesn't have to be calculated during intersection.
-            // Lower 24 bits are the first index of the triangle
+            uint32_t index0 = model.indices[triangles[start + i].startIndex + 0];
+            uint32_t index1 = model.indices[triangles[start + i].startIndex + 1];
+            uint32_t index2 = model.indices[triangles[start + i].startIndex + 2];
+            reorderedIndexBuffer.push_back( index0 );
+            reorderedIndexBuffer.push_back( index1 );
+            reorderedIndexBuffer.push_back( index2 );
+            
+            // find which material this triangle corresponds to
             int index = triangles[start + i].startIndex;
             int material = 0;
             for ( const auto& mesh : model.meshes )
@@ -56,15 +69,15 @@ namespace PT
                     break;
                 }
             }
-            assert( index < 1 << 24 );
-            assert( model.materials.size() < 1 << 8 );
-            node->triangles[i] = BVHTriangleInfo( index, material );
+            model.triangleMaterialIndices.push_back( material );
         }
     }
 
-    static std::unique_ptr< BVHNode > BuildBVHInteral( Model& model, std::vector< Triangle >& triangles, int start, int end )
+    static std::unique_ptr< BVHBuildNode > BuildBVHInteral( Model& model, std::vector< Triangle >& triangles, int start, int end,
+                                                            std::vector< uint32_t >& reorderedIndexBuffer, int& totalNodes )
     {
-        auto node = std::make_unique< BVHNode >();
+        auto node = std::make_unique< BVHBuildNode >();
+        ++totalNodes;
 
         // calculate bounding box of all triangles
         for ( int i = start; i < end; ++i )
@@ -76,7 +89,7 @@ namespace PT
         assert( numTriangles > 0 );
         if ( numTriangles == 1 )
         {
-            InitLeafNode( node, model, triangles, start, end );
+            InitLeafNode( node, model, triangles,reorderedIndexBuffer, start, end );
             return node;
         }
 
@@ -93,14 +106,37 @@ namespace PT
         if ( midTriangle == endTri || midTriangle == beginTri )
         {
             midTriangle = &triangles[(start + end) / 2];
-            std::nth_element( beginTri, midTriangle, endTri, [dim]( const Triangle &a, const Triangle &b ) { return a.centroid[dim] < b.centroid[dim]; });
+            std::nth_element( beginTri, midTriangle, endTri, [dim]( const Triangle &a, const Triangle &b ) { return a.centroid[dim] < b.centroid[dim]; } );
         }
 
-        int cutoff  = start + static_cast< int >( midTriangle - &triangles[start] );
-        node->left  = BuildBVHInteral( model, triangles, start, cutoff );
-        node->right = BuildBVHInteral( model, triangles, cutoff, end );
+        int cutoff        = start + static_cast< int >( midTriangle - &triangles[start] );
+        node->firstChild  = BuildBVHInteral( model, triangles, start, cutoff, reorderedIndexBuffer, totalNodes );
+        node->secondChild = BuildBVHInteral( model, triangles, cutoff, end, reorderedIndexBuffer, totalNodes );
 
         return node;
+    }
+
+    static int FlattenBVHBuild( BVHNode* linearRoot, BVHBuildNode* buildNode, int& slot )
+    {
+        if ( !buildNode )
+        {
+            return -1;
+        }
+
+        int currentSlot = slot++;
+        linearRoot[currentSlot].aabb         = buildNode->aabb;
+        linearRoot[currentSlot].numTriangles = buildNode->numTriangles;
+        if ( buildNode->numTriangles > 0 )
+        {
+            linearRoot[currentSlot].firstIndexOffset = buildNode->firstIndex;
+        }
+        else
+        {
+            FlattenBVHBuild( linearRoot, buildNode->firstChild.get(), slot );
+            linearRoot[currentSlot].secondChildOffset = FlattenBVHBuild( linearRoot, buildNode->secondChild.get(), slot );
+        }        
+
+        return currentSlot;
     }
 
     static void BuildBVH( Model& model )
@@ -123,7 +159,17 @@ namespace PT
             tri.startIndex = i;
         }
 
-        model.bvh = BuildBVHInteral( model, triangles, 0, static_cast< int >( triangles.size() ) );
+        std::vector< uint32_t > newIndexBuffer;
+        newIndexBuffer.reserve( model.indices.size() );
+        int totalNodes = 0;
+        auto bvhHelper = BuildBVHInteral( model, triangles, 0, static_cast< int >( triangles.size() ), newIndexBuffer, totalNodes );
+        model.indices  = std::move( newIndexBuffer );
+
+        // flatten the bvh
+        model.bvh = new BVHNode[totalNodes];
+        int slot  = 0;
+        FlattenBVHBuild( &model.bvh[0], bvhHelper.get(), slot );
+        assert( slot == totalNodes );
     }
 
     bool Model::Load( const ModelCreateInfo& createInfo )
@@ -158,6 +204,7 @@ namespace PT
         uvs.reserve( numVertices );
         tangents.reserve( numVertices );
         indices.reserve( numIndices );
+        triangleMaterialIndices.reserve( numIndices / 3 );
 
         uint32_t indexOffset = 0; 
         for ( size_t meshIdx = 0; meshIdx < meshes.size(); ++meshIdx )
@@ -171,7 +218,6 @@ namespace PT
                 const aiVector3D* pNormal = &paiMesh->mNormals[vIdx];
                 glm::vec3 pos( pPos->x, pPos->y, pPos->z );
                 vertices.emplace_back( pos );
-                aabb.Union( pos );
                 normals.emplace_back( pNormal->x, pNormal->y, pNormal->z );
 
                 if ( paiMesh->HasTextureCoords( 0 ) )
@@ -239,27 +285,28 @@ namespace PT
         }
     }
 
+    // stack-based traversal from pbrt
     bool Model::IntersectRay( const Ray& ray, IntersectionData& hitData, int& materialIndex ) const
     {
         glm::vec3 invRayDir = glm::vec3( 1.0 ) / ray.direction;
-        std::stack< BVHNode* > nodes;
-        nodes.push( bvh.get() );
+        int nodesToVisit[64];
+        int currentNodeIndex = 0;
+        int toVisitOffset    = 0;
 
-        BVHTriangleInfo closestTri;
+        uint32_t closestTriIndex0;
         float closestU = -1, closestV;
         float t, u, v;
-        while ( !nodes.empty() )
+        while ( true )
         {
-            auto node = nodes.top();
-            nodes.pop();
-            if ( intersect::RayAABB( ray.position, invRayDir, node->aabb.min, node->aabb.max ) )
+            const BVHNode& node = bvh[currentNodeIndex];
+            if ( intersect::RayAABB( ray.position, invRayDir, node.aabb.min, node.aabb.max ) )
             {
                 // if this is a leaf node, check each triangle
-                if ( !node->triangles.empty() )
+                if ( node.numTriangles > 0 )
                 {
-                    for ( const auto& tri : node->triangles )
+                    for ( int tri = 0; tri < node.numTriangles; ++tri )
                     {
-                        int index0 = tri.Index();
+                        int index0     = node.firstIndexOffset + 3 * tri;
                         const auto& v0 = vertices[indices[index0 + 0]];
                         const auto& v1 = vertices[indices[index0 + 1]];
                         const auto& v2 = vertices[indices[index0 + 2]];
@@ -267,39 +314,39 @@ namespace PT
                         {
                             if ( t < hitData.t )
                             {
-                                hitData.t  = t;
-                                closestTri = tri;
-                                closestU   = u;
-                                closestV   = v;
+                                hitData.t        = t;
+                                closestTriIndex0 = index0;
+                                closestU         = u;
+                                closestV         = v;
                             }
                         }
                     }
+                    if ( toVisitOffset == 0 ) break;
+                    currentNodeIndex = nodesToVisit[--toVisitOffset];
                 }
                 else
                 {
-                    if ( node->left )
-                    {
-                        nodes.push( node->left.get() );
-                    }
-                    if ( node->right )
-                    {
-                        nodes.push( node->right.get() );
-                    }
+                    nodesToVisit[toVisitOffset++] = node.secondChildOffset;
+                    currentNodeIndex = currentNodeIndex + 1;
                 }
+            }
+            else
+            {
+                if ( toVisitOffset == 0 ) break;
+                currentNodeIndex = nodesToVisit[--toVisitOffset];
             }
         }
 
         if ( closestU != -1 )
         {
-            int index0       = closestTri.Index();
             hitData.position = ray.Evaluate( hitData.t );
-            const auto& n0   = normals[indices[index0 + 0]];
-            const auto& n1   = normals[indices[index0 + 1]];
-            const auto& n2   = normals[indices[index0 + 2]];
+            const auto& n0   = normals[indices[closestTriIndex0 + 0]];
+            const auto& n1   = normals[indices[closestTriIndex0 + 1]];
+            const auto& n2   = normals[indices[closestTriIndex0 + 2]];
             u                = closestU;
             v                = closestV;
             hitData.normal   = glm::normalize( ( 1 - u - v ) * n0 + u * n1 + u * n2 );
-            materialIndex    = closestTri.Material();
+            materialIndex    = triangleMaterialIndices[closestTriIndex0 / 3];
             return true;
         }
 

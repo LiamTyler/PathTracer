@@ -17,38 +17,16 @@ namespace PT
         std::string filename;
     };
 
-    struct BVHTriangleInfo
-    {
-        
-        BVHTriangleInfo() :
-            data( 0 )
-        {}
-
-        BVHTriangleInfo( int index, int material ) :
-            data( index | material << 24 )
-        {}
-
-        int Index() const
-        {
-            return data & ( (1 << 24) - 1 );
-        }
-
-        int Material() const
-        {
-            return data >> 24;
-        }
-
-        // lower 24 bits are the first index of the triangle in the model.indices array
-        // upper 8 bits are the material index
-        int data;
-    };
-
     struct BVHNode
     {
-        std::unique_ptr< BVHNode > left;
-        std::unique_ptr< BVHNode > right;
-        std::vector< BVHTriangleInfo > triangles;
         AABB aabb;
+        union
+        {
+            int firstIndexOffset; // if node is a leaf
+            int secondChildOffset; // if node is not a leaf (dont actually have to save the offset of the first child, since its always parent + 1)
+        };
+        uint16_t numTriangles;
+        uint16_t padding;
     };
 
     struct Mesh
@@ -56,7 +34,7 @@ namespace PT
     public:
         std::string name;
         int materialIndex = -1;
-        int startIndex;
+        int startIndex; // wont be accurate after BVH construction due to reordering
         int numIndices;
         int numVertices;
     };
@@ -75,8 +53,8 @@ namespace PT
         std::vector< glm::vec2 > uvs;
         std::vector< glm::vec3 > tangents;
         std::vector< uint32_t > indices;
-        AABB aabb;
-        std::unique_ptr< BVHNode > bvh;
+        std::vector< uint8_t > triangleMaterialIndices;
+        BVHNode* bvh = nullptr;
         std::vector< Mesh > meshes;
         std::vector< std::shared_ptr< Material > > materials;
     };
