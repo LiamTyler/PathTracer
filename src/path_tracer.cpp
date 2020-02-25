@@ -121,7 +121,7 @@ void PathTracer::Render( Scene* scene )
     auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
     auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
 
-    std::atomic< int > renderProgress = 0;
+    std::atomic< int > renderProgress(0);
     int onePercent = static_cast< int >( std::ceil( renderedImage.GetHeight() / 100.0f ) );
 
     #pragma omp parallel for schedule( dynamic )
