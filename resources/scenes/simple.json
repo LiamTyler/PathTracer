@@ -4,8 +4,6 @@
         "filename": "output.png"
     },
     "Camera": {
-        "_position": [ 0, 0, 5 ],
-        "_rotation": [ 0, 0, 0 ],
         "position": [ -4, 2, 0 ],
         "rotation": [ 0, -90, 0 ],
         "vfov": 45,
@@ -21,12 +19,8 @@
         "color": [ 0.2, 0.2, 0.2 ]
     },
     "DirectionalLight": {
-        "direction": [ 0, -4, -1 ],
+        "direction": [ 0, -1, 0 ],
         "color": [ 1, 1, 1 ]
-    },
-    "_PointLight": {
-        "color": [ 10, 10, 10 ],
-        "position": [ 0, 0, -8 ]
     },
     "Material": {
         "name": "floor",
@@ -62,6 +56,10 @@
         "filename": "models/plane.obj"
     },
     "Model": {
+        "name": "bunny",
+        "filename": "models/bunny.ply"
+    },
+    "Model": {
         "name": "dragon",
         "filename": "models/dragon.obj"
     },
@@ -69,21 +67,21 @@
         "name": "sponza",
         "filename": "models/sponza.obj"
     },
-    "_ModelInstance": {
+    "ModelInstance": {
         "model": "plane",
         "material": "floor",
         "transform": {
-            "position": [ 0, -2, -10 ],
+            "position": [ -4, 0.1, 0 ],
             "rotation": [ 0, 0, 0 ],
             "scale": [ 10, 10, 10 ]
         }
     },
-    "_ModelInstance": {
+    "ModelInstance": {
         "model": "dragon",
-        "material": "green",
+        "material": "red",
         "transform": {
-            "position": [ 0, 1, -10 ],
-            "rotation": [ 0, 90, 0 ],
+            "position": [ 4, 1, 0 ],
+            "rotation": [ 0, 0, 0 ],
             "scale": [ 5, 5, 5   ]
         }
     },
@@ -96,12 +94,22 @@
             "scale": [ 0.01, 0.01, 0.01 ]
         }
     },
-    "_Sphere": {
+    "ModelInstance": {
+        "model": "bunny",
+        "material": "red",
         "transform": {
-            "position": [ -2, 1, -10 ],
+            "position": [ 3, 2, 2 ],
             "rotation": [ 0, 0, 0 ],
-            "scale": [ 2, 2, 2 ]
-        },
-        "material": "red"
+            "scale": [ 4, 4, 4 ]
+        }
+    },
+    "_ModelInstance": {
+        "model": "sponza",
+        "material": "green",
+        "transform": {
+            "position": [ 0, 0, 0 ],
+            "rotation": [ 0, 0, 0 ],
+            "scale": [ 0.01, 0.01, 0.01 ]
+        }
     }
 }

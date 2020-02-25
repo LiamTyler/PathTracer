@@ -16,6 +16,7 @@ namespace PT
         uint32_t firstIndex;
         uint32_t numTriangles;
         AABB aabb;
+        uint8_t axis;
     };
 
     struct Triangle
@@ -99,8 +100,9 @@ namespace PT
         {
             centroidAABB.Union( triangles[i].centroid);
         }
-        int dim   = centroidAABB.LongestDimension();
-        float mid = centroidAABB.Centroid()[dim];
+        int dim    = centroidAABB.LongestDimension();
+        float mid  = centroidAABB.Centroid()[dim];
+        node->axis = dim;
 
         // sort all the triangles
         Triangle* beginTri    = &triangles[start];
@@ -206,6 +208,7 @@ namespace PT
 
         int currentSlot = slot++;
         linearRoot[currentSlot].aabb         = buildNode->aabb;
+        linearRoot[currentSlot].axis         = buildNode->axis;
         linearRoot[currentSlot].numTriangles = buildNode->numTriangles;
         if ( buildNode->numTriangles > 0 )
         {
@@ -373,6 +376,7 @@ namespace PT
         int nodesToVisit[64];
         int currentNodeIndex = 0;
         int toVisitOffset    = 0;
+        int isDirNeg[3] = { invRayDir.x < 0, invRayDir.y < 0, invRayDir.z < 0 };
 
         uint32_t closestTriIndex0;
         float closestU = -1, closestV;
@@ -380,7 +384,8 @@ namespace PT
         while ( true )
         {
             const BVHNode& node = bvh[currentNodeIndex];
-            if ( intersect::RayAABB( ray.position, invRayDir, node.aabb.min, node.aabb.max ) )
+            if ( intersect::RayAABBFastest( ray.position, invRayDir, isDirNeg, node.aabb.min, node.aabb.max, hitData.t ) )
+            // if ( intersect::RayAABB( ray.position, invRayDir, node.aabb.min, node.aabb.max, hitData.t ) )
             {
                 // if this is a leaf node, check each triangle
                 if ( node.numTriangles > 0 )

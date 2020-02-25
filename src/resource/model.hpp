@@ -26,7 +26,8 @@ namespace PT
             int secondChildOffset; // if node is not a leaf (dont actually have to save the offset of the first child, since its always parent + 1)
         };
         uint16_t numTriangles;
-        uint16_t padding;
+        uint8_t axis;
+        uint8_t padding;
     };
 
     struct Mesh

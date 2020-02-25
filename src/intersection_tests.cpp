@@ -71,7 +71,7 @@ namespace intersect
         return t > 0;
     }
 
-    bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax )
+    bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax, float currentT )
     {
         float tx1 = (aabbMin.x - rayPos.x) * invRayDir.x;
         float tx2 = (aabbMax.x - rayPos.x) * invRayDir.x;
@@ -91,7 +91,34 @@ namespace intersect
         tmin = std::max( tmin, std::min( tz1, tz2 ) );
         tmax = std::min( tmax, std::max( tz1, tz2 ) );
 
-        return tmax >= std::max( 0.0f, tmin );
+        return (tmin < currentT) && (tmax >= std::max( 0.0f, tmin ));
+    }
+
+    bool RayAABBFastest( const glm::vec3& rayPos, const glm::vec3& invRayDir, const int isDirNeg[3], const glm::vec3& aabbMin, const glm::vec3& aabbMax, float currentT )
+    {
+        float tMin  = ((isDirNeg[0] ? aabbMax : aabbMin).x - rayPos.x) * invRayDir.x;
+        float tMax  = ((1 - isDirNeg[0] ? aabbMax : aabbMin).x - rayPos.x) * invRayDir.x;
+        float tyMin = ((isDirNeg[1] ? aabbMax : aabbMin).y - rayPos.y) * invRayDir.y;
+        float tyMax = ((1 - isDirNeg[1] ? aabbMax : aabbMin).y - rayPos.y) * invRayDir.y;
+
+        // Update to ensure robust bounds intersection
+        //tMax *= 1 + 2 * gamma(3);
+        // tyMax *= 1 + 2 * gamma(3);
+        if (tMin > tyMax || tyMin > tMax) return false;
+        if (tyMin > tMin) tMin = tyMin;
+        if (tyMax < tMax) tMax = tyMax;
+
+        // Check for ray intersection against $z$ slab
+        float tzMin = ((isDirNeg[2] ? aabbMax : aabbMin).z - rayPos.z) * invRayDir.z;
+        float tzMax = ((1 - isDirNeg[2] ? aabbMax : aabbMin).z - rayPos.z) * invRayDir.z;
+
+        // Update _tzMax_ to ensure robust bounds intersection
+        //tzMax *= 1 + 2 * gamma(3);
+        if ( tMin > tzMax || tzMin > tMax ) return false;
+        if ( tzMin > tMin ) tMin = tzMin;
+        if ( tzMax < tMax ) tMax = tzMax;
+        //return (tMin < ray.tMax) && (tMax > 0);
+        return (tMin < currentT) && (tMax > 0);
     }
 
 } // namespace intersect 
