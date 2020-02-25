@@ -101,7 +101,6 @@ namespace PT
             centroidAABB.Union( triangles[i].centroid);
         }
         int dim    = centroidAABB.LongestDimension();
-        float mid  = centroidAABB.Centroid()[dim];
         node->axis = dim;
 
         // sort all the triangles
@@ -180,7 +179,6 @@ namespace PT
             {
                 midTriangle = std::partition( beginTri, endTri, [&]( const Triangle& tri )
                     {
-                        glm::vec3 relativePos = tri.centroid - node->aabb.min;
                         int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( tri.centroid )[dim] ) );
                         return b <= minCostSplitBucket;
                     });
@@ -386,8 +384,8 @@ namespace PT
         int toVisitOffset    = 0;
         int isDirNeg[3] = { invRayDir.x < 0, invRayDir.y < 0, invRayDir.z < 0 };
 
-        uint32_t closestTriIndex0;
-        float closestU = -1, closestV;
+        uint32_t closestTriIndex0 = 0;
+        float closestU = -1, closestV = -1;
         float t, u, v;
         while ( true )
         {
