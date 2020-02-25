@@ -93,13 +93,20 @@ namespace PT
             return node;
         }
 
-        // split using the longest dimension of the aabb
-        int dim   = node->aabb.LongestDimension();
-        float mid = node->aabb.Centroid()[dim];
+        // split using the longest dimension of the aabb containing the centroids
+        AABB centroidAABB;
+        for ( int i = start; i < end; ++i )
+        {
+            centroidAABB.Union( triangles[i].centroid);
+        }
+        int dim   = centroidAABB.LongestDimension();
+        float mid = centroidAABB.Centroid()[dim];
 
         // sort all the triangles
         Triangle* beginTri    = &triangles[start];
         Triangle* endTri      = &triangles[0] + end;
+        Triangle* midTriangle;
+        /*
         Triangle* midTriangle = std::partition( beginTri, endTri, [dim, mid]( const Triangle& tri ) { return tri.centroid[dim] < mid; } );
         
         // if the split did nothing, fall back to just splitting the nodes equally into two categories
@@ -107,6 +114,80 @@ namespace PT
         {
             midTriangle = &triangles[(start + end) / 2];
             std::nth_element( beginTri, midTriangle, endTri, [dim]( const Triangle &a, const Triangle &b ) { return a.centroid[dim] < b.centroid[dim]; } );
+        }
+        */
+
+        // if there are only a few primitives, it doesnt really matter to bother with SAH
+        if ( numTriangles <= 4 )
+        {
+            midTriangle = &triangles[(start + end) / 2];
+            std::nth_element( beginTri, midTriangle, endTri, [dim]( const Triangle &a, const Triangle &b ) { return a.centroid[dim] < b.centroid[dim]; } );
+        }
+        else
+        {
+            const int nBuckets = 20;
+            struct BucketInfo
+            {
+                AABB aabb;
+                int count = 0;
+            };
+            BucketInfo buckets[nBuckets];
+
+            // bin all of the primitives into their corresponding buckets and update the bucket AABB
+            for ( int i = start; i < end; ++i )
+            {
+                int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( triangles[i].centroid )[dim] ) );
+                buckets[b].count++;
+                buckets[b].aabb.Union( triangles[i].aabb );
+            }
+
+            float cost[nBuckets - 1];
+            // Compute costs for splitting after each bucket
+            for ( int i = 0; i < nBuckets - 1; ++i )
+            {
+                AABB b0, b1;
+                int count0 = 0, count1 = 0;
+                for ( int j = 0; j <= i; ++j )
+                {
+                    b0.Union( buckets[j].aabb );
+                    count0 += buckets[j].count;
+                }
+                for ( int j = i + 1; j < nBuckets; ++j )
+                {
+                    b1.Union( buckets[j].aabb );
+                    count1 += buckets[j].count;
+                }
+                cost[i] = 0.5f + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / node->aabb.SurfaceArea();
+            }
+
+            float minCost = cost[0];
+            int minCostSplitBucket = 0;
+            for ( int i = 1; i < nBuckets - 1; ++i )
+            {
+                if ( cost[i] < minCost )
+                {
+                    minCost = cost[i];
+                    minCostSplitBucket = i;
+                }
+            }
+
+            // see if the split is actually worth it
+            int maxTrisInALeaf = 4;
+            float leafCost     = (float)numTriangles;
+            if ( numTriangles > maxTrisInALeaf || minCost < leafCost )
+            {
+                midTriangle = std::partition( beginTri, endTri, [&]( const Triangle& tri )
+                    {
+                        glm::vec3 relativePos = tri.centroid - node->aabb.min;
+                        int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( tri.centroid )[dim] ) );
+                        return b <= minCostSplitBucket;
+                    });
+            }
+            else
+            {
+                InitLeafNode( node, model, triangles, reorderedIndexBuffer, start, end );
+                return node;
+            }
         }
 
         int cutoff        = start + static_cast< int >( midTriangle - &triangles[start] );
@@ -259,7 +340,7 @@ namespace PT
 
         auto bvhTime = Time::GetTimePoint();
         BuildBVH( *this );
-        std::cout << "Model '" << name << "' BVH builded in: " << Time::GetDuration( bvhTime ) / 1000.0f << " seconds" << std::endl;
+        std::cout << "Model '" << name << "' BVH built in: " << Time::GetDuration( bvhTime ) / 1000.0f << " seconds" << std::endl;
 
         return true;
     }

@@ -49,4 +49,20 @@ int AABB::LongestDimension() const
     }
 }
 
+float AABB::SurfaceArea() const
+{
+    glm::vec3 d = max - min;
+    return 2 * (d.x*d.y + d.x*d.z + d.y*d.z);
+}
+
+glm::vec3 AABB::Offset( const glm::vec3& p ) const
+{
+    glm::vec3 d   = max - min;
+    glm::vec3 rel = p - min;
+    if ( max.x > min.x ) rel.x /= d.x;
+    if ( max.y > min.y ) rel.y /= d.y;
+    if ( max.z > min.z ) rel.z /= d.z;
+    return rel;
+}
+
 } // namespace PT

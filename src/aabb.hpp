@@ -14,6 +14,8 @@ struct AABB
     void Union( const glm::vec3& point );
     glm::vec3 Centroid() const;
     int LongestDimension() const;
+    float SurfaceArea() const;
+    glm::vec3 Offset( const glm::vec3& p ) const;
 
     glm::vec3 min;
     glm::vec3 max;

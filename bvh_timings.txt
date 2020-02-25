@@ -26,4 +26,9 @@ sponza.json: 1.78
 simple BVH with equal split fallback (goal of 1 node per leaf) + flattened bvh + reordering index buffer
 ------------------------------
 dragon.json: 0.57
-sponza.json: 1.73
+sponza.json: 1.74
+
+SAH BVH + flattened bvh + reordering index buffer
+------------------------------
+dragon.json: 0.55
+sponza.json: 0.53
