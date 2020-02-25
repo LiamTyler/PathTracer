@@ -33,5 +33,9 @@ Just open build/PathTracer.sln and build there
 
 ## Running
 ```
-./bin/pathTracer[_debug] <path to scene file>
+./bin/pathTracer[_debug] <path to scene file> (ex: ../resources/scenes/simple.json)
 ```
+
+## Example Output:
+resources/scenes/simple.json rendered in 0.40 seconds @ 1000x1000 with 4x anti-aliasing on my Intel i7 8700k CPU
+![Alt text](docs_and_images/exampleOutput.png)
