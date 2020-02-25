@@ -70,6 +70,8 @@ set(
     src/resource/resource.hpp
     src/resource/resource_manager.cpp
     src/resource/resource_manager.hpp
+    src/resource/skybox.cpp
+    src/resource/skybox.hpp
     
     src/utils/json_parsing.cpp
     src/utils/json_parsing.hpp

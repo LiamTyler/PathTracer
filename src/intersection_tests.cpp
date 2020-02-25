@@ -14,12 +14,6 @@ namespace intersect
         float b      = 2 * glm::dot( OC, rayDir );
         float c      = glm::dot( OC, OC ) - radius * radius;
 
-        // exit if ray is outside of sphere (c > 0) and ray is pointing away from sphere (b > 0)
-        // if ( c > 0 && b > 0 )
-        // {
-        //     return false;
-        // }
-
         float disc = b*b - 4*a*c;
         if ( disc < 0 )
         {
@@ -42,10 +36,10 @@ namespace intersect
     {
         glm::vec3 v0v1 = v1 - v0;
         glm::vec3 v0v2 = v2 - v0;
-        glm::vec3 pvec = glm::cross( v0v2, rayDir );
+        glm::vec3 pvec = glm::cross( rayDir, v0v2 );
         float det      = glm::dot( v0v1, pvec );
         // ray and triangle are parallel if det is close to 0
-        if ( fabs( det ) < 0.00000001 )
+        if ( fabs( det ) < 0.000000001 )
         {
             return false;
         }
@@ -59,7 +53,7 @@ namespace intersect
             return false;
         }
 
-        glm::vec3 qvec = glm::cross( v0v1, tvec );
+        glm::vec3 qvec = glm::cross( tvec, v0v1 );
         v              = glm::dot( rayDir, qvec ) * invDet;
         if ( v < 0 || u + v > 1 )
         {
@@ -101,23 +95,17 @@ namespace intersect
         float tyMin = ((isDirNeg[1] ? aabbMax : aabbMin).y - rayPos.y) * invRayDir.y;
         float tyMax = ((1 - isDirNeg[1] ? aabbMax : aabbMin).y - rayPos.y) * invRayDir.y;
 
-        // Update to ensure robust bounds intersection
-        //tMax *= 1 + 2 * gamma(3);
-        // tyMax *= 1 + 2 * gamma(3);
-        if (tMin > tyMax || tyMin > tMax) return false;
-        if (tyMin > tMin) tMin = tyMin;
-        if (tyMax < tMax) tMax = tyMax;
+        if ( tMin > tyMax || tyMin > tMax ) return false;
+        if ( tyMin > tMin ) tMin = tyMin;
+        if ( tyMax < tMax ) tMax = tyMax;
 
-        // Check for ray intersection against $z$ slab
         float tzMin = ((isDirNeg[2] ? aabbMax : aabbMin).z - rayPos.z) * invRayDir.z;
         float tzMax = ((1 - isDirNeg[2] ? aabbMax : aabbMin).z - rayPos.z) * invRayDir.z;
 
-        // Update _tzMax_ to ensure robust bounds intersection
-        //tzMax *= 1 + 2 * gamma(3);
+
         if ( tMin > tzMax || tzMin > tMax ) return false;
         if ( tzMin > tMin ) tMin = tzMin;
         if ( tzMax < tMax ) tMax = tzMax;
-        //return (tMin < ray.tMax) && (tMax > 0);
         return (tMin < currentT) && (tMax > 0);
     }
 

@@ -60,6 +60,18 @@ static void ParseCamera( rapidjson::Value& v, Scene* scene )
     camera.UpdateOrientationVectors();
 }
 
+static void ParseDirectionalLight( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, DirectionalLight* > mapping(
+    {
+        { "color",     []( rapidjson::Value& v, DirectionalLight* l ) { l->color     = ParseVec3( v ); } },
+        { "direction", []( rapidjson::Value& v, DirectionalLight* l ) { l->direction = glm::normalize( ParseVec3( v ) ); } },
+    });
+
+    scene->lights.push_back( new DirectionalLight );
+    mapping.ForEachMember( value, (DirectionalLight*)scene->lights[scene->lights.size() - 1] );
+}
+
 static void ParseMaterial( rapidjson::Value& v, Scene* scene )
 {
     auto mat = std::make_shared< Material >();
@@ -93,63 +105,6 @@ static void ParseModel( rapidjson::Value& v, Scene* scene )
     {
         ResourceManager::AddModel( model );
     }
-}
-
-static void ParsePointLight( rapidjson::Value& value, Scene* scene )
-{
-    static FunctionMapper< void, PointLight* > mapping(
-    {
-        { "color",    []( rapidjson::Value& v, PointLight* l ) { l->color    = ParseVec3( v ); } },
-        { "position", []( rapidjson::Value& v, PointLight* l ) { l->position = ParseVec3( v ); } },
-    });
-
-    scene->lights.push_back( new PointLight );
-    mapping.ForEachMember( value, (PointLight*)scene->lights[scene->lights.size() - 1] );
-}
-
-static void ParseDirectionalLight( rapidjson::Value& value, Scene* scene )
-{
-    static FunctionMapper< void, DirectionalLight* > mapping(
-    {
-        { "color",     []( rapidjson::Value& v, DirectionalLight* l ) { l->color     = ParseVec3( v ); } },
-        { "direction", []( rapidjson::Value& v, DirectionalLight* l ) { l->direction = glm::normalize( ParseVec3( v ) ); } },
-    });
-
-    scene->lights.push_back( new DirectionalLight );
-    mapping.ForEachMember( value, (DirectionalLight*)scene->lights[scene->lights.size() - 1] );
-}
-
-static void ParseSphere( rapidjson::Value& value, Scene* scene )
-{
-    static FunctionMapper< void, Sphere& > mapping(
-    {
-        { "transform", []( rapidjson::Value& v, Sphere& o )
-            {
-                o.transform = ParseTransform( v );
-            }
-        },
-        { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
-    });
-
-    auto o = std::make_shared< Sphere >();
-    scene->shapes.push_back( o );
-    mapping.ForEachMember( value, *o );
-}
-
-static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
-{
-    static FunctionMapper< void, Scene& > mapping(
-    {
-        { "filename",   []( rapidjson::Value& v, Scene& s ) { s.outputImageFilename = v.GetString(); } },
-        { "resolution", []( rapidjson::Value& v, Scene& s )
-            {
-                s.imageResolution.x = ParseNumber< int >( v[0] );
-                s.imageResolution.y = ParseNumber< int >( v[1] );
-            }
-        },
-    });
-
-    mapping.ForEachMember( value, *scene );
 }
 
 static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
@@ -194,6 +149,76 @@ static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
     assert( o->materials.size() );
 }
 
+static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, Scene& > mapping(
+    {
+        { "filename",   []( rapidjson::Value& v, Scene& s ) { s.outputImageFilename = v.GetString(); } },
+        { "resolution", []( rapidjson::Value& v, Scene& s )
+            {
+                s.imageResolution.x = ParseNumber< int >( v[0] );
+                s.imageResolution.y = ParseNumber< int >( v[1] );
+            }
+        },
+    });
+
+    mapping.ForEachMember( value, *scene );
+}
+
+static void ParsePointLight( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, PointLight* > mapping(
+    {
+        { "color",    []( rapidjson::Value& v, PointLight* l ) { l->color    = ParseVec3( v ); } },
+        { "position", []( rapidjson::Value& v, PointLight* l ) { l->position = ParseVec3( v ); } },
+    });
+
+    scene->lights.push_back( new PointLight );
+    mapping.ForEachMember( value, (PointLight*)scene->lights[scene->lights.size() - 1] );
+}
+
+static void ParseSphere( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, Sphere& > mapping(
+    {
+        { "transform", []( rapidjson::Value& v, Sphere& o )
+            {
+                o.transform = ParseTransform( v );
+            }
+        },
+        { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
+    });
+
+    auto o = std::make_shared< Sphere >();
+    scene->shapes.push_back( o );
+    mapping.ForEachMember( value, *o );
+}
+
+static void ParseSkybox( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, SkyboxCreateInfo& > mapping(
+    {
+        { "name",           []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.name           = v.GetString(); } },
+        { "right",          []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.right          = v.GetString(); } },
+        { "left",           []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.left           = v.GetString(); } },
+        { "top",            []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.top            = v.GetString(); } },
+        { "bottom",         []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.bottom         = v.GetString(); } },
+        { "back",           []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.back           = v.GetString(); } },
+        { "front",          []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.front          = v.GetString(); } },
+        { "flipVertically", []( rapidjson::Value& v, SkyboxCreateInfo& i ) { i.flipVertically = v.GetBool(); } },
+    });
+
+    SkyboxCreateInfo info;
+    mapping.ForEachMember( value, info );
+
+    auto res = std::make_shared< Skybox >();
+    if ( res->Load( info ) )
+    {
+        ResourceManager::AddSkybox( res );
+    }
+    scene->skybox = res;
+}
+
 bool Scene::Load( const std::string& filename )
 {
     auto startTime = Time::GetTimePoint();
@@ -209,13 +234,14 @@ bool Scene::Load( const std::string& filename )
         { "AmbientLight",     ParseAmbientLight },
         { "BackgroundColor",  ParseBackgroundColor },
         { "Camera",           ParseCamera },
+        { "DirectionalLight", ParseDirectionalLight },
         { "Material",         ParseMaterial },
         { "Model",            ParseModel },
-        { "PointLight",       ParsePointLight },
-        { "DirectionalLight", ParseDirectionalLight },
-        { "Sphere",           ParseSphere },
-        { "OutputImageData",  ParseOutputImageData },
         { "ModelInstance",    ParseModelInstance },
+        { "OutputImageData",  ParseOutputImageData },
+        { "PointLight",       ParsePointLight },
+        { "Skybox",           ParseSkybox },
+        { "Sphere",           ParseSphere },
     });
 
     mapping.ForEachMember( document, this );

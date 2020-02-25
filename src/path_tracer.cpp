@@ -70,7 +70,12 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     if ( mat.Tr != glm::vec3( 0 ) )
     {
         Ray refractRay( hitData.position - 0.0001f * N, glm::refract( ray.direction, N, IOR_current / IOR_entering ) );
-        refractColor += ShootRay( refractRay, scene, depth + 1 );
+        
+        // hack for false positives?
+        if ( refractRay.direction != glm::vec3( 0 ) )
+        {
+            refractColor += ShootRay( refractRay, scene, depth + 1 );
+        }
     }
 
     color += reflectColor + refractColor;
@@ -87,7 +92,14 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
     }
     else
     {
-        pixelColor = scene->backgroundColor;
+        if ( scene->skybox )
+        {
+            pixelColor = glm::vec3( scene->skybox->GetPixel( ray ) );
+        }
+        else
+        {
+            pixelColor = scene->backgroundColor;
+        }
     }
 
     return pixelColor;

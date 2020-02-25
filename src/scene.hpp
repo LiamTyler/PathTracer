@@ -4,6 +4,7 @@
 #include "lights.hpp"
 #include "resource/material.hpp"
 #include "shapes.hpp"
+#include "resource/skybox.hpp"
 #include <string>
 #include <vector>
 
@@ -25,6 +26,7 @@ public:
     std::vector< Light* > lights;
     glm::vec3 ambientLight          = glm::vec3( 0.1f );
     glm::vec3 backgroundColor       = glm::vec3( 0.1f );
+    std::shared_ptr< Skybox > skybox;
     std::string outputImageFilename = "rendered.png";
     glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );
 };

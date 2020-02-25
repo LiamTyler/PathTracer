@@ -1,16 +1,16 @@
 {
     "OutputImageData": {
         "resolution": [ 1000, 1000 ],
-        "filename": "output.png"
+        "filename": "outupt.png"
     },
     "Camera": {
-        "position": [ -4, 2, 0 ],
-        "rotation": [ 0, -90, 0 ],
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 0, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
-        "antialiasing": "NONE"
+        "antialiasing": "ROTATED_2X2_GRID"
     },
     "AmbientLight": {
         "color": [ 0.0, 0.0, 0.0 ]
@@ -19,21 +19,23 @@
         "color": [ 0.2, 0.2, 0.2 ]
     },
     "DirectionalLight": {
-        "direction": [ 0, -1, 0 ],
+        "direction": [ 0, -4, -1 ],
         "color": [ 1, 1, 1 ]
+    },
+    "Skybox": {
+        "name": "water",
+        "right": "images/water/right.jpg",
+        "left": "images/water/left.jpg",
+        "top": "images/water/top.jpg",
+        "bottom": "images/water/bottom.jpg",
+        "back": "images/water/back.jpg",
+        "front": "images/water/front.jpg"
     },
     "Material": {
         "name": "floor",
-        "albedo": [ 0.6, 0.6, 0.6 ],
-        "Ks": [ 0.5, 0.5, 0.5 ],
+        "albedo": [ 0.4, 0.4, 0.4 ],
+        "Ks": [ 0.2, 0.2, 0.2 ],
         "Ns": 90,
-        "ior": 1
-    },
-    "Material": {
-        "name": "red",
-        "albedo": [ 1, 0, 0 ],
-        "Ks": [ 0.4, 0.4, 0.4 ],
-        "Ns": 40,
         "ior": 1
     },
     "Material": {
@@ -44,72 +46,52 @@
         "ior": 1
     },
     "Material": {
+        "name": "mirror",
+        "albedo": [ 0, 0, 0 ],
+        "Ks": [ 1, 1, 1 ],
+        "Ns": 40,
+        "ior": 1
+    },
+    "Material": {
         "name": "glass",
         "albedo": [ 0, 0, 0 ],
-        "Ks": [ 0.1, 0.1, 0.1 ],
-        "Ns": 1,
-        "Tr": [ 1, 1, 1 ],
-        "ior": 1.5
+        "Ks": [ 0, 0, 0 ],
+        "Ns": 0,
+        "ior": 1.5,
+        "Tr": [ 1, 1, 1 ]
     },
     "Model": {
         "name": "plane",
         "filename": "models/plane.obj"
     },
     "Model": {
-        "name": "bunny",
-        "filename": "models/bunny.ply"
-    },
-    "Model": {
         "name": "dragon",
         "filename": "models/dragon.obj"
-    },
-    "Model": {
-        "name": "sponza",
-        "filename": "models/sponza.obj"
     },
     "ModelInstance": {
         "model": "plane",
         "material": "floor",
         "transform": {
-            "position": [ -4, 0.1, 0 ],
+            "position": [ 0, -2, -10 ],
             "rotation": [ 0, 0, 0 ],
             "scale": [ 10, 10, 10 ]
         }
     },
     "ModelInstance": {
         "model": "dragon",
-        "material": "red",
-        "transform": {
-            "position": [ 4, 1, 0 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 5, 5, 5   ]
-        }
-    },
-    "ModelInstance": {
-        "model": "sponza",
         "material": "green",
         "transform": {
-            "position": [ 0, 0, 0 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 0.01, 0.01, 0.01 ]
+            "position": [ 2, 0, -10 ],
+            "rotation": [ 0, 90, 0 ],
+            "scale": [ 3, 3, 3  ]
         }
     },
-    "ModelInstance": {
-        "model": "bunny",
-        "material": "red",
+    "Sphere": {
+        "material": "glass",
         "transform": {
-            "position": [ 3, 2, 2 ],
+            "position": [ -2, 0, -10 ],
             "rotation": [ 0, 0, 0 ],
-            "scale": [ 4, 4, 4 ]
-        }
-    },
-    "_ModelInstance": {
-        "model": "sponza",
-        "material": "green",
-        "transform": {
-            "position": [ 0, 0, 0 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 0.01, 0.01, 0.01 ]
+            "scale": [ 1, 1, 1 ]
         }
     }
 }

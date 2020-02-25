@@ -44,6 +44,7 @@ namespace PT
     {
     public:
         Model() = default;
+        ~Model();
         
         bool Load( const ModelCreateInfo& createInfo );
         void RecalculateNormals();

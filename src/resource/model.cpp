@@ -127,7 +127,7 @@ namespace PT
         }
         else
         {
-            const int nBuckets = 20;
+            const int nBuckets = 12;
             struct BucketInfo
             {
                 AABB aabb;
@@ -254,6 +254,14 @@ namespace PT
         int slot  = 0;
         FlattenBVHBuild( &model.bvh[0], bvhHelper.get(), slot );
         assert( slot == totalNodes );
+    }
+
+    Model::~Model()
+    {
+        if ( bvh )
+        {
+            delete[] bvh;
+        }
     }
 
     bool Model::Load( const ModelCreateInfo& createInfo )
@@ -385,9 +393,8 @@ namespace PT
         {
             const BVHNode& node = bvh[currentNodeIndex];
             if ( intersect::RayAABBFastest( ray.position, invRayDir, isDirNeg, node.aabb.min, node.aabb.max, hitData.t ) )
-            // if ( intersect::RayAABB( ray.position, invRayDir, node.aabb.min, node.aabb.max, hitData.t ) )
             {
-                // if this is a leaf node, check each triangle
+                // if this  is a leaf node, check each triangle
                 if ( node.numTriangles > 0 )
                 {
                     for ( int tri = 0; tri < node.numTriangles; ++tri )
@@ -432,6 +439,7 @@ namespace PT
             u                = closestU;
             v                = closestV;
             hitData.normal   = glm::normalize( ( 1 - u - v ) * n0 + u * n1 + u * n2 );
+            // hitData.normal   = glm::normalize( u * n0 + v * n1 + ( 1 - u - v ) * n2 );
             materialIndex    = triangleMaterialIndices[closestTriIndex0 / 3];
             return true;
         }

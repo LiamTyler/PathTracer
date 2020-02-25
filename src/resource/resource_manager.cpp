@@ -6,6 +6,7 @@ namespace PT
 
 static std::unordered_map< std::string, std::shared_ptr< Material > > s_materials;
 static std::unordered_map< std::string, std::shared_ptr< Model > > s_models;
+static std::unordered_map< std::string, std::shared_ptr< Skybox > > s_skyboxes;
 
 namespace ResourceManager
 {
@@ -14,18 +15,18 @@ namespace ResourceManager
     {
         s_materials.clear();
         s_models.clear();
+        s_skyboxes.clear();
     }
 
     void Shutdown()
     {
-        s_materials.clear();
-        s_models.clear();
+        Init();
     }
 
-    void AddMaterial( std::shared_ptr< Material > mat )
+    void AddMaterial( std::shared_ptr< Material > res )
     {
-        assert( mat->name != "" );
-        s_materials[mat->name] = mat;
+        assert( res->name != "" );
+        s_materials[res->name] = res;
     }
 
     std::shared_ptr< Material > GetMaterial( const std::string& name )
@@ -34,16 +35,28 @@ namespace ResourceManager
         return s_materials[name];
     }
 
-    void AddModel( std::shared_ptr< Model > model )
+    void AddModel( std::shared_ptr< Model > res )
     {
-        assert( model->name != "" );
-        s_models[model->name] = model;
+        assert( res->name != "" );
+        s_models[res->name] = res;
     }
 
     std::shared_ptr< Model > GetModel( const std::string& name )
     {
         assert( s_models.find( name ) != s_models.end() );
         return s_models[name];
+    }
+
+    void AddSkybox( std::shared_ptr< Skybox > res )
+    {
+        assert( res->name != "" );
+        s_skyboxes[res->name] = res;
+    }
+
+    std::shared_ptr< Skybox > GetSkybox( const std::string& name )
+    {
+        assert( s_skyboxes.find( name ) != s_skyboxes.end() );
+        return s_skyboxes[name];
     }
 
 } // namespace ResourceManager
