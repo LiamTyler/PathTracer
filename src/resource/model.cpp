@@ -2,9 +2,12 @@
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
+#include "configuration.hpp"
 #include "intersection_tests.hpp"
+#include "resource/resource_manager.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
+#include <filesystem>
 #include <stack>
 
 namespace PT
@@ -26,6 +29,72 @@ namespace PT
         uint32_t startIndex;
     };
 
+    static std::string TrimWhiteSpace( const std::string& s )
+    {
+        size_t start = s.find_first_not_of( " \t" );
+        size_t end   = s.find_last_not_of( " \t" );
+        return s.substr( start, end - start + 1 );
+    }
+
+    static std::shared_ptr< Texture > LoadAssimpTexture( const aiMaterial* pMaterial, aiTextureType texType )
+    {
+        namespace fs = std::filesystem;
+        aiString path;
+        if ( pMaterial->GetTexture( texType, 0, &path, NULL, NULL, NULL, NULL, NULL ) == AI_SUCCESS )
+        {
+            std::string name = TrimWhiteSpace( path.data );
+            if ( ResourceManager::GetTexture( name ) )
+            {
+                return ResourceManager::GetTexture( name );
+            }
+
+            std::string fullPath;
+            // search for texture starting with
+            if ( fs::exists( RESOURCE_DIR + name ) )
+            {
+                fullPath = RESOURCE_DIR + name;
+            }
+            else
+            {
+                std::string basename = fs::path( name ).filename().string();
+                for( auto itEntry = fs::recursive_directory_iterator( RESOURCE_DIR ); itEntry != fs::recursive_directory_iterator(); ++itEntry )
+                {
+                    std::string itFile = itEntry->path().filename().string();
+                    if ( basename == itEntry->path().filename().string() )
+                    {
+                        fullPath = fs::absolute( itEntry->path() ).string();
+                        break;
+                    }
+                }
+            }
+                    
+            if ( fullPath != "" )
+            {
+                TextureCreateInfo info;
+                info.name     = std::filesystem::path( fullPath ).stem().string();;
+                info.filename = fullPath;
+                auto ret = std::make_shared< Texture >();
+                if ( !ret->Load( info ) )
+                {
+                    std::cout << "Failed to load texture '" << name << "' with default settings" << std::endl;
+                    return nullptr;
+                }
+                ret->name = name;
+                return ret;
+            }
+            else
+            {
+                std::cout << "Could not find image file '" << name << "'" << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Could not get texture of type: " << texType << std::endl;
+        }
+
+        return nullptr;
+    }
+
     static bool ParseMaterials( const std::string& filename, Model* model, const aiScene* scene )
     {
         model->materials.resize( scene->mNumMaterials );
@@ -41,6 +110,16 @@ namespace PT
             color = aiColor3D( 0.f, 0.f, 0.f );
             pMaterial->Get( AI_MATKEY_COLOR_DIFFUSE, color );
             model->materials[mtlIdx]->albedo = { color.r, color.g, color.b };
+
+            if ( pMaterial->GetTextureCount( aiTextureType_DIFFUSE ) > 0 )
+            {
+                assert( pMaterial->GetTextureCount( aiTextureType_DIFFUSE ) == 1 );
+                model->materials[mtlIdx]->albedoTexture = LoadAssimpTexture( pMaterial, aiTextureType_DIFFUSE );
+                if ( !model->materials[mtlIdx]->albedoTexture )
+                {
+                    return false;
+                }
+            }
         }
 
         return true;

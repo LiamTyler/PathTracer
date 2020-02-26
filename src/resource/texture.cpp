@@ -47,6 +47,12 @@ unsigned char* Texture::GetPixels() const
 
 glm::vec4 Texture::GetPixel( float u, float v ) const
 {
+    // int w           = std::min( m_width - 1, static_cast< int >( u * m_width ) );
+    // int h           = std::min( m_height - 1, static_cast< int >( v * m_height ) );
+    u = fmodf( u, 1 );
+    u = u < 0 ? u + 1 : u;
+    v = fmodf( v, 1 );
+    v = v < 0 ? v + 1 : v;
     int w           = std::min( m_width - 1, static_cast< int >( u * m_width ) );
     int h           = std::min( m_height - 1, static_cast< int >( v * m_height ) );
     unsigned char r = m_pixels[4 * (h * m_width + w) + 0];

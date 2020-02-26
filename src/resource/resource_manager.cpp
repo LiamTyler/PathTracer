@@ -33,8 +33,12 @@ namespace ResourceManager
 
     std::shared_ptr< Material > GetMaterial( const std::string& name )
     {
-        assert( s_materials.find( name ) != s_materials.end() );
-        return s_materials[name];
+        auto it = s_materials.find( name );
+        if ( it == s_materials.end() )
+        {
+            return nullptr;
+        }
+        return it->second;
     }
 
     void AddModel( std::shared_ptr< Model > res )
@@ -45,8 +49,12 @@ namespace ResourceManager
 
     std::shared_ptr< Model > GetModel( const std::string& name )
     {
-        assert( s_models.find( name ) != s_models.end() );
-        return s_models[name];
+        auto it = s_models.find( name );
+        if ( it == s_models.end() )
+        {
+            return nullptr;
+        }
+        return it->second;
     }
 
     void AddSkybox( std::shared_ptr< Skybox > res )
@@ -57,8 +65,12 @@ namespace ResourceManager
 
     std::shared_ptr< Skybox > GetSkybox( const std::string& name )
     {
-        assert( s_skyboxes.find( name ) != s_skyboxes.end() );
-        return s_skyboxes[name];
+        auto it = s_skyboxes.find( name );
+        if ( it == s_skyboxes.end() )
+        {
+            return nullptr;
+        }
+        return it->second;
     }
 
     void AddTexture( std::shared_ptr< Texture > res )
@@ -69,8 +81,12 @@ namespace ResourceManager
 
     std::shared_ptr< Texture > GetTexture( const std::string& name )
     {
-        assert( s_textures.find( name ) != s_textures.end() );
-        return s_textures[name];
+        auto it = s_textures.find( name );
+        if ( it == s_textures.end() )
+        {
+            return nullptr;
+        }
+        return it->second;
     }
 
 } // namespace ResourceManager
