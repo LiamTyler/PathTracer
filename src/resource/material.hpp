@@ -3,6 +3,7 @@
 #include "math.hpp"
 #include "resource/resource.hpp"
 #include "resource/texture.hpp"
+#include <memory>
 
 namespace PT
 {
