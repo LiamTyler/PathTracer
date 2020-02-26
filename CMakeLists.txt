@@ -18,6 +18,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib)
 
+add_subdirectory(ext)
+
 if (UNIX)
     #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wno-implicit-fallthrough -Wshadow -Wno-unused-variable -Wno-unused-function")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function")
@@ -31,9 +33,11 @@ endif()
 
 configure_file(cmake/configuration.hpp.in ${CMAKE_SOURCE_DIR}/src/configuration.hpp)
 
-include_directories(
+include_directories( SYSTEM
     ext/
     ext/assimp/include
+)
+include_directories(
     src/
 )
 
@@ -91,23 +95,6 @@ set_target_properties(
     PROPERTIES
     DEBUG_POSTFIX _debug
 )
-
-set(ASSIMP_BUILD_TESTS        OFF CACHE BOOL " " FORCE)
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL " " FORCE)
-# disable a bunch of importers that we wont use. Just add
-# them to the list if you want it enabled again
-set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL " " FORCE)
-set(ASSIMP_BUILD_OBJ_IMPORTER     ON CACHE BOOL "Enable format OBJ"     FORCE)
-set(ASSIMP_BUILD_FBX_IMPORTER     ON CACHE BOOL "Enable format FBX"     FORCE)
-set(ASSIMP_BUILD_3DS_IMPORTER     ON CACHE BOOL "Enable format 3DS"     FORCE)
-set(ASSIMP_BUILD_PLY_IMPORTER     ON CACHE BOOL "Enable format PLY"     FORCE)
-set(ASSIMP_BUILD_COLLADA_IMPORTER ON CACHE BOOL "Enable format COLLADA" FORCE)
-set(ASSIMP_BUILD_STL_IMPORTER     ON CACHE BOOL "Enable format STL"     FORCE)
-set(ASSIMP_BUILD_GLTF_IMPORTER    ON CACHE BOOL "Enable format GLTF"    FORCE)
-set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL " " FORCE)
-# assimp doesnt compile if all exporters are disabled -.-
-set(ASSIMP_BUILD_OBJ_EXPORTER    ON CACHE BOOL "Enable format OBJ"    FORCE)
-add_subdirectory(ext/assimp)
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(pathTracer PUBLIC OpenMP::OpenMP_CXX assimp)
