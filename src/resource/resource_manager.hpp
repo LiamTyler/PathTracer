@@ -3,6 +3,7 @@
 #include "resource/material.hpp"
 #include "resource/model.hpp"
 #include "resource/skybox.hpp"
+#include "resource/texture.hpp"
 #include <memory>
 #include <string>
 
@@ -22,6 +23,9 @@ namespace ResourceManager
 
     void AddSkybox( std::shared_ptr< Skybox > res );
     std::shared_ptr< Skybox > GetSkybox( const std::string& name );
+
+    void AddTexture( std::shared_ptr< Texture > res );
+    std::shared_ptr< Texture > GetTexture( const std::string& name );
 
 } // namespace ResourceManager
 } // namespace PT

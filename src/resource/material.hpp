@@ -2,6 +2,7 @@
 
 #include "math.hpp"
 #include "resource/resource.hpp"
+#include "resource/texture.hpp"
 
 namespace PT
 {
@@ -13,6 +14,7 @@ struct Material : public Resource
     float Ns         = 40.0f;
     glm::vec3 Tr     = glm::vec3( 0 );
     float ior        = 1.0f;
+    std::shared_ptr< Texture > albedoTexture;
 };
 
 } // namespace PT

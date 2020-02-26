@@ -14,14 +14,13 @@ bool Sphere::Intersect( const Ray& ray, IntersectionData* hitData ) const
     }
     if ( t < hitData->t )
     {
-        hitData->t        = t;
-        hitData->material = material.get();
-        hitData->position = ray.Evaluate( t );
-        auto localPos     = localRay.Evaluate( t );
-        float a           = transform.scale.x;
-        float b           = transform.scale.y;
-        float c           = transform.scale.z;
-        hitData->normal   = glm::normalize( 2.0f * glm::vec3( localPos.x / (a*a), localPos.y / (b*b), localPos.z / (c*c) ) );
+        hitData->t           = t;
+        hitData->material    = material.get();
+        hitData->position    = ray.Evaluate( t );
+        auto localPos        = localRay.Evaluate( t );
+        hitData->normal      = glm::normalize( glm::vec3( glm::inverse( glm::transpose( transform.ModelMatrix() ) ) * glm::vec4( localPos, 0 ) ) );
+        hitData->texCoords.x = -(1 + atan2( localPos.z, localPos.x ) / M_PI) * 0.5; 
+        hitData->texCoords.y = acosf( -localPos.y ) / M_PI;
     }
 
     return true;

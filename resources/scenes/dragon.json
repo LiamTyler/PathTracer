@@ -59,7 +59,7 @@
     },
     "Model": {
         "name": "dragon",
-        "filename": "models/dragon.obj"
+        "filename": "models/bunny.ply"
     },
     "_ModelInstance": {
         "model": "plane",
@@ -72,10 +72,10 @@
     },
     "ModelInstance": {
         "model": "dragon",
-        "material": "glass",
+        "material": "red",
         "transform": {
             "position": [ 0, 0, -4 ],
-            "rotation": [ 0, 90, 0 ],
+            "rotation": [ 0, 0, 0 ],
             "scale": [ 1, 1, 1 ]
         }
     }

@@ -77,12 +77,21 @@ static void ParseMaterial( rapidjson::Value& v, Scene* scene )
     auto mat = std::make_shared< Material >();
     static FunctionMapper< void, Material& > mapping(
     {
-        { "name",   []( rapidjson::Value& v, Material& mat ) { mat.name   = v.GetString(); } },
-        { "albedo", []( rapidjson::Value& v, Material& mat ) { mat.albedo = ParseVec3( v ); } },
-        { "Ks",     []( rapidjson::Value& v, Material& mat ) { mat.Ks     = ParseVec3( v ); } },
-        { "Ns",     []( rapidjson::Value& v, Material& mat ) { mat.Ns     = ParseNumber< float >( v ); } },
-        { "Tr",     []( rapidjson::Value& v, Material& mat ) { mat.Tr     = ParseVec3( v ); } },
-        { "ior",    []( rapidjson::Value& v, Material& mat ) { mat.ior    = ParseNumber< float >( v ); } },
+        { "name",          []( rapidjson::Value& v, Material& mat ) { mat.name   = v.GetString(); } },
+        { "albedo",        []( rapidjson::Value& v, Material& mat ) { mat.albedo = ParseVec3( v ); } },
+        { "Ks",            []( rapidjson::Value& v, Material& mat ) { mat.Ks     = ParseVec3( v ); } },
+        { "Ns",            []( rapidjson::Value& v, Material& mat ) { mat.Ns     = ParseNumber< float >( v ); } },
+        { "Tr",            []( rapidjson::Value& v, Material& mat ) { mat.Tr     = ParseVec3( v ); } },
+        { "ior",           []( rapidjson::Value& v, Material& mat ) { mat.ior    = ParseNumber< float >( v ); } },
+        { "albedoTexture", []( rapidjson::Value& v, Material& mat )
+            {
+                mat.albedoTexture = ResourceManager::GetTexture( v.GetString() );
+                if ( !mat.albedoTexture )
+                {
+                    std::cout << "No texture with name '" << v.GetString() << "' found in resource manager!" << std::endl;
+                }
+            }
+        },
     });
 
     mapping.ForEachMember( v, *mat );
@@ -215,8 +224,26 @@ static void ParseSkybox( rapidjson::Value& value, Scene* scene )
     if ( res->Load( info ) )
     {
         ResourceManager::AddSkybox( res );
+        scene->skybox = res;
     }
-    scene->skybox = res;
+}
+
+static void ParseTexture( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, TextureCreateInfo& > mapping(
+    {
+        { "name",           []( rapidjson::Value& v, TextureCreateInfo& info ) { info.name           = v.GetString(); } },
+        { "filename",       []( rapidjson::Value& v, TextureCreateInfo& info ) { info.filename       = RESOURCE_DIR + std::string( v.GetString() ); } },
+        { "flipVertically", []( rapidjson::Value& v, TextureCreateInfo& info ) { info.flipVertically = v.GetBool(); } },
+    });
+
+    TextureCreateInfo info;
+    mapping.ForEachMember( value, info );
+    auto res = std::make_shared< Texture >();
+    if ( res->Load( info ) )
+    {
+        ResourceManager::AddTexture( res );
+    }
 }
 
 bool Scene::Load( const std::string& filename )
@@ -242,6 +269,7 @@ bool Scene::Load( const std::string& filename )
         { "PointLight",       ParsePointLight },
         { "Skybox",           ParseSkybox },
         { "Sphere",           ParseSphere },
+        { "Texture",          ParseTexture },
     });
 
     mapping.ForEachMember( document, this );

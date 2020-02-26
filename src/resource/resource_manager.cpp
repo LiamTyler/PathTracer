@@ -7,6 +7,7 @@ namespace PT
 static std::unordered_map< std::string, std::shared_ptr< Material > > s_materials;
 static std::unordered_map< std::string, std::shared_ptr< Model > > s_models;
 static std::unordered_map< std::string, std::shared_ptr< Skybox > > s_skyboxes;
+static std::unordered_map< std::string, std::shared_ptr< Texture > > s_textures;
 
 namespace ResourceManager
 {
@@ -16,6 +17,7 @@ namespace ResourceManager
         s_materials.clear();
         s_models.clear();
         s_skyboxes.clear();
+        s_textures.clear();
     }
 
     void Shutdown()
@@ -57,6 +59,18 @@ namespace ResourceManager
     {
         assert( s_skyboxes.find( name ) != s_skyboxes.end() );
         return s_skyboxes[name];
+    }
+
+    void AddTexture( std::shared_ptr< Texture > res )
+    {
+        assert( res->name != "" );
+        s_textures[res->name] = res;
+    }
+
+    std::shared_ptr< Texture > GetTexture( const std::string& name )
+    {
+        assert( s_textures.find( name ) != s_textures.end() );
+        return s_textures[name];
     }
 
 } // namespace ResourceManager

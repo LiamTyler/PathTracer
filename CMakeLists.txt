@@ -72,6 +72,8 @@ set(
     src/resource/resource_manager.hpp
     src/resource/skybox.cpp
     src/resource/skybox.hpp
+    src/resource/texture.cpp
+    src/resource/texture.hpp
     
     src/utils/json_parsing.cpp
     src/utils/json_parsing.hpp

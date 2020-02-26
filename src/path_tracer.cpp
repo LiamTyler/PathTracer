@@ -70,12 +70,17 @@ glm::vec3 Refract(const glm::vec3& I, const glm::vec3& N, const float &ior )
 
 glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitData, int depth )
 {
-    auto N          = hitData.normal;
-    const auto V    = -ray.direction;
-    const auto& mat = *hitData.material;
+    auto N           = hitData.normal;
+    const auto V     = -ray.direction;
+    const auto& mat  = *hitData.material;
+    glm::vec3 albedo = mat.albedo;
+    if ( mat.albedoTexture )
+    {
+        albedo *= glm::vec3( mat.albedoTexture->GetPixel( hitData.texCoords.x, hitData.texCoords.y ) );
+    }
 
     // ambient
-    glm::vec3 color = mat.albedo * scene->ambientLight;
+    glm::vec3 color = albedo * scene->ambientLight;
 
     for ( const auto& light : scene->lights )
     {
@@ -91,7 +96,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
 
         const auto I = info.attenuation * light->color;
         // diffuse
-        color += I * mat.albedo * std::max( glm::dot( N, L ), 0.0f );
+        color += I * albedo * std::max( glm::dot( N, L ), 0.0f );
         // specular
         color += I * mat.Ks * std::pow( std::max( 0.0f, glm::dot( V, glm::reflect( -L, N ) ) ), mat.Ns );
     }
@@ -107,7 +112,6 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     if ( !rayOutsideObject )
     {
         N = -N;
-        std::swap( iorCurrent, iorEntering );
     }
     if ( mat.Ks != glm::vec3( 0 ) )
     {

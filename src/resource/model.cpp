@@ -430,15 +430,18 @@ namespace PT
 
         if ( closestU != -1 )
         {
-            hitData.position = ray.Evaluate( hitData.t );
-            const auto& n0   = normals[indices[closestTriIndex0 + 0]];
-            const auto& n1   = normals[indices[closestTriIndex0 + 1]];
-            const auto& n2   = normals[indices[closestTriIndex0 + 2]];
-            u                = closestU;
-            v                = closestV;
-            hitData.normal   = glm::normalize( ( 1 - u - v ) * n0 + u * n1 + u * n2 );
-            // hitData.normal   = glm::normalize( u * n0 + v * n1 + ( 1 - u - v ) * n2 );
-            materialIndex    = triangleMaterialIndices[closestTriIndex0 / 3];
+            materialIndex     = triangleMaterialIndices[closestTriIndex0 / 3];
+            hitData.position  = ray.Evaluate( hitData.t );
+            uint32_t i0       = indices[closestTriIndex0 + 0];
+            uint32_t i1       = indices[closestTriIndex0 + 1];
+            uint32_t i2       = indices[closestTriIndex0 + 2];
+            const auto& n0    = normals[i0];
+            const auto& n1    = normals[i1];
+            const auto& n2    = normals[i2];
+            u                 = closestU;
+            v                 = closestV;
+            hitData.normal    = glm::normalize( ( 1 - u - v ) * n0 + u * n1 + v * n2 );
+            hitData.texCoords = ( 1 - u - v ) * uvs[i0] + u * uvs[i1] + v * uvs[i2];
             return true;
         }
 

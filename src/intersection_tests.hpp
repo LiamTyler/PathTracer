@@ -12,6 +12,7 @@ struct IntersectionData
     glm::vec3 normal;
     Material* material;
     float t = FLT_MAX;
+    glm::vec2 texCoords;
 };
 
 namespace intersect

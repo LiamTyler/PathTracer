@@ -1,6 +1,5 @@
 #include "resource/skybox.hpp"
 #include "configuration.hpp"
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 #include <algorithm>
 #include <vector>
