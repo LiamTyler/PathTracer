@@ -21,6 +21,53 @@ void PathTracer::InitImage( int width, int height )
     renderedImage = Image( width, height );
 }
 
+float Fresnel(const glm::vec3& I, const glm::vec3& N, const float &ior )
+{
+    float cosi = std::min( 1.0f, std::max( 1.0f, glm::dot( I, N ) ) );
+    float etai = 1, etat = ior;
+    if ( cosi > 0 )
+    {
+        std::swap(etai, etat);
+    }
+
+    float sint = etai / etat * sqrtf( std::max( 0.0f, 1 - cosi * cosi ) );
+
+    float kr;
+    if ( sint >= 1 )
+    {
+        kr = 1;
+    }
+    else
+    {
+        float cost = sqrtf( std::max( 0.0f, 1 - sint * sint ) );
+        cosi = fabsf( cosi );
+        float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
+        float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
+        kr = (Rs * Rs + Rp * Rp) / 2;
+    }
+
+    return kr;
+}
+
+glm::vec3 Refract(const glm::vec3& I, const glm::vec3& N, const float &ior ) 
+{ 
+    float cosi  = std::min( 1.0f, std::max( 1.0f, glm::dot( I, N ) ) );
+    float etai  = 1, etat = ior;
+    glm::vec3 n = N; 
+    if ( cosi < 0 )
+    {
+        cosi = -cosi;
+    }
+    else
+    {
+        std::swap( etai, etat );
+        n= -N;
+    } 
+    float eta = etai / etat; 
+    float k   = 1 - eta * eta * (1 - cosi * cosi); 
+    return k < 0 ? glm::vec3( 0 ) : eta * I + (eta * cosi - sqrtf( k )) * n; 
+} 
+
 glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitData, int depth )
 {
     auto N          = hitData.normal;
@@ -53,13 +100,14 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     glm::vec3 reflectColor( 0 );
     glm::vec3 refractColor( 0 );
 
-    float IOR_current  = 1;
-    float IOR_entering = mat.ior;
+    float iorCurrent      = 1;
+    float iorEntering     = mat.ior;
     bool rayOutsideObject = glm::dot( N, ray.direction ) < 0;
+    float kr              = Fresnel( ray.direction, N, iorEntering );
     if ( !rayOutsideObject )
     {
         N = -N;
-        std::swap( IOR_current, IOR_entering );
+        std::swap( iorCurrent, iorEntering );
     }
     if ( mat.Ks != glm::vec3( 0 ) )
     {
@@ -67,18 +115,14 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
         reflectColor += mat.Ks * ShootRay( reflectRay, scene, depth + 1 );
     }
 
-    if ( mat.Tr != glm::vec3( 0 ) )
+    if ( mat.Tr != glm::vec3( 0 ) && kr < 1 )
     {
-        Ray refractRay( hitData.position - 0.0001f * N, glm::refract( ray.direction, N, IOR_current / IOR_entering ) );
-        
-        // hack for false positives?
-        if ( refractRay.direction != glm::vec3( 0 ) )
-        {
-            refractColor += ShootRay( refractRay, scene, depth + 1 );
-        }
+        Ray refractRay( hitData.position - 0.0001f * N, Refract( ray.direction, hitData.normal, mat.ior ) );
+        assert( refractRay.direction != glm::vec3( 0 ) );
+        refractColor += mat.Tr * ShootRay( refractRay, scene, depth + 1 );
     }
 
-    color += reflectColor + refractColor;
+    color += kr * reflectColor + (1 - kr) * refractColor;
     return color;
 }
 

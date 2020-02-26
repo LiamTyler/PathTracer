@@ -4,13 +4,22 @@
         "filename": "dragon.png"
     },
     "Camera": {
-        "position": [ 0, 0, 5 ],
+        "position": [ 0, 0, 0 ],
         "rotation": [ 0, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
-        "antialiasing": "ROTATED_2X2_GRID"
+        "antialiasing": "NONE"
+    },
+    "Skybox": {
+        "name": "water",
+        "right": "images/water/right.jpg",
+        "left": "images/water/left.jpg",
+        "top": "images/water/top.jpg",
+        "bottom": "images/water/bottom.jpg",
+        "back": "images/water/back.jpg",
+        "front": "images/water/front.jpg"
     },
     "AmbientLight": {
         "color": [ 0.0, 0.0, 0.0 ]
@@ -30,11 +39,19 @@
         "ior": 1
     },
     "Material": {
-        "name": "green",
-        "albedo": [ 0, 1, 0 ],
+        "name": "red",
+        "albedo": [ 1, 0, 0 ],
         "Ks": [ 0, 0, 0 ],
         "Ns": 40,
         "ior": 1
+    },
+    "Material": {
+        "name": "glass",
+        "albedo": [ 0, 0, 0 ],
+        "Ks": [ 0.2, 0.2, 0.2 ],
+        "Ns": 0,
+        "ior": 1.5,
+        "Tr": [ 1, 1, 1 ]
     },
     "Model": {
         "name": "plane",
@@ -44,7 +61,7 @@
         "name": "dragon",
         "filename": "models/dragon.obj"
     },
-    "ModelInstance": {
+    "_ModelInstance": {
         "model": "plane",
         "material": "floor",
         "transform": {
@@ -55,11 +72,11 @@
     },
     "ModelInstance": {
         "model": "dragon",
-        "material": "green",
+        "material": "glass",
         "transform": {
-            "position": [ 0, 1, -10 ],
+            "position": [ 0, 0, -4 ],
             "rotation": [ 0, 90, 0 ],
-            "scale": [ 5, 5, 5   ]
+            "scale": [ 1, 1, 1 ]
         }
     }
 }
