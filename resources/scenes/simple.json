@@ -79,17 +79,17 @@
     },
     "ModelInstance": {
         "model": "dragon",
-        "material": "green",
+        "material": "glass",
         "transform": {
-            "position": [ 2, 0, -10 ],
+            "position": [ 0, 0, -7 ],
             "rotation": [ 0, 90, 0 ],
             "scale": [ 3, 3, 3  ]
         }
     },
-    "Sphere": {
+    "_Sphere": {
         "material": "glass",
         "transform": {
-            "position": [ -2, 0, -10 ],
+            "position": [ 0, 0, -5 ],
             "rotation": [ 0, 0, 0 ],
             "scale": [ 1, 1, 1 ]
         }

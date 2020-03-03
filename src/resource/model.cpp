@@ -423,13 +423,13 @@ namespace PT
             std::cout << "Could not load the model's materials" << std::endl;
             return false;
         }
+        RecalculateNormals();
 
         std::cout << "Model '" << name << "' loaded in: " << Time::GetDuration( loadTime ) / 1000.0f << " seconds" << std::endl;
 
         auto bvhTime = Time::GetTimePoint();
         BuildBVH( *this );
         std::cout << "Model '" << name << "' BVH built in: " << Time::GetDuration( bvhTime ) / 1000.0f << " seconds" << std::endl;
-
         return true;
     }
 

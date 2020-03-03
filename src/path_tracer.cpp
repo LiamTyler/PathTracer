@@ -134,7 +134,7 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
 {
     glm::vec3 pixelColor;
     IntersectionData hitData;
-    if ( scene->Intersect( ray, hitData ) && depth < 2 )
+    if ( depth < 10 && scene->Intersect( ray, hitData ) )
     {
         pixelColor = Illuminate( scene, ray, hitData, depth );
     }
