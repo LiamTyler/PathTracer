@@ -48,6 +48,33 @@ static void ParseBackgroundColor( rapidjson::Value& v, Scene* scene )
     scene->backgroundColor = ParseVec3( member );
 }
 
+static void ParseBVH( rapidjson::Value& value, Scene* scene )
+{
+    static std::unordered_map< std::string, BVH::SplitMethod > stringToSplitMethod =
+    {
+        { "Middle", BVH::SplitMethod::Middle },
+        { "EqualCounts", BVH::SplitMethod::EqualCounts },
+        { "SAH", BVH::SplitMethod::SAH },
+    };
+    static FunctionMapper< void, BVH& > mapping(
+    {
+        { "splitMethod",      []( rapidjson::Value& v, BVH& b )
+            {
+                auto it = stringToSplitMethod.find( v.GetString() );
+                if ( it == stringToSplitMethod.end() )
+                {
+                    std::cout << "No SplitMethod with name '" << v.GetString() << "' found! Using SAH" << std::endl;
+                }
+                else
+                {
+                    b.splitMethod = it->second;
+                }
+            }
+        },
+    });
+    mapping.ForEachMember( value, scene->bvh );
+}
+
 static void ParseCamera( rapidjson::Value& v, Scene* scene )
 {
     Camera& camera = scene->camera;
@@ -272,6 +299,7 @@ bool Scene::Load( const std::string& filename )
     {
         { "AmbientLight",     ParseAmbientLight },
         { "BackgroundColor",  ParseBackgroundColor },
+        { "BVH",              ParseBVH },
         { "Camera",           ParseCamera },
         { "DirectionalLight", ParseDirectionalLight },
         { "Material",         ParseMaterial },
@@ -315,14 +343,12 @@ bool Scene::Load( const std::string& filename )
 bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
     hitData.t = FLT_MAX;
-    /*
-    for ( const auto& shape : shapes )
-    {
-        shape->Intersect( ray, &hitData );
-    }
-    return hitData.t != FLT_MAX && hitData.t > 0;
-    */
     return bvh.Intersect( ray, &hitData );
+    // for ( const auto& shape : shapes )
+    // {
+    //     shape->Intersect( ray, &hitData );
+    // }
+    // return hitData.t != FLT_MAX;
 }
 
 glm::vec3 Scene::GetBackgroundColor( const Ray& ray )

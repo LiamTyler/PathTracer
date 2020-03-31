@@ -12,6 +12,9 @@
         "gamma": 1.0,
         "antialiasing": "ROTATED_2X2_GRID"
     },
+    "BVH": {
+        "splitMethod": "SAH"
+    },
     "MaxDepth": 10,
     "AmbientLight": {
         "color": [ 0.0, 0.0, 0.0 ]

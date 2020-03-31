@@ -22,6 +22,8 @@ struct LinearBVHNode
 class BVH
 {
 public:
+    enum class SplitMethod { SAH, Middle, EqualCounts };
+
     BVH() = default;
     ~BVH();
 
@@ -29,6 +31,7 @@ public:
     bool Intersect( const Ray& ray, IntersectionData* hitData ) const;
     AABB GetAABB() const;
 
+    SplitMethod splitMethod = SplitMethod::Middle;
     std::vector< std::shared_ptr< Shape > > shapes;
     LinearBVHNode* nodes = nullptr;
 };

@@ -31,7 +31,7 @@ struct BVHBuildShapeInfo
 };
 
 static std::unique_ptr< BVHBuildNode > BuildBVHInteral( std::vector< BVHBuildShapeInfo >& buildShapeInfos, int start, int end,
-                                                        std::vector< std::shared_ptr< Shape > >& orderedShapes, uint32_t& totalNodes )
+    std::vector< std::shared_ptr< Shape > >& orderedShapes, uint32_t& totalNodes, BVH::SplitMethod splitMethod )
 {
     auto node = std::make_unique< BVHBuildNode >();
     ++totalNodes;
@@ -69,95 +69,110 @@ static std::unique_ptr< BVHBuildNode > BuildBVHInteral( std::vector< BVHBuildSha
     BVHBuildShapeInfo* endShape   = &buildShapeInfos[0] + end;
     BVHBuildShapeInfo* midShape;   
     
-    // Triangle* midTriangle = std::partition( beginTri, endTri, [dim, mid]( const Triangle& tri ) { return tri.centroid[dim] < mid; } );
-    //     
-    // // if the split did nothing, fall back to just splitting the nodes equally into two categories
-    // if ( midTriangle == endTri || midTriangle == beginTri )
-    // {
-    //     midTriangle = &triangles[(start + end) / 2];
-    //     std::nth_element( beginTri, midTriangle, endTri, [dim]( const Triangle &a, const Triangle &b ) { return a.centroid[dim] < b.centroid[dim]; } );
-    // }
-
-    // if there are only a few primitives, it doesnt really matter to bother with SAH
-    if ( numShapes <= 4 )
+    switch ( splitMethod )
     {
-        midShape = &buildShapeInfos[(start + end) / 2];
-        std::nth_element( beginShape, midShape, endShape, [dim]( const BVHBuildShapeInfo &a, const BVHBuildShapeInfo &b ) { return a.centroid[dim] < b.centroid[dim]; } );
-    }
-    else
-    {
-        const int nBuckets = 12;
-        struct BucketInfo
+        case BVH::SplitMethod::Middle:
         {
-            AABB aabb;
-            int count = 0;
-        };
-        BucketInfo buckets[nBuckets];
+            float mid = (centroidAABB.min[dim] + centroidAABB.max[dim]) / 2;
+            midShape  = std::partition( beginShape, endShape, [dim, mid]( const BVHBuildShapeInfo& shape ) { return shape.centroid[dim] < mid; } );
 
-        // bin all of the primitives into their corresponding buckets and update the bucket AABB
-        for ( int i = start; i < end; ++i )
-        {
-            int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( buildShapeInfos[i].centroid )[dim] ) );
-            buckets[b].count++;
-            buckets[b].aabb.Union( buildShapeInfos[i].aabb );
-        }
-
-        float cost[nBuckets - 1];
-        // Compute costs for splitting after each bucket
-        for ( int i = 0; i < nBuckets - 1; ++i )
-        {
-            AABB b0, b1;
-            int count0 = 0, count1 = 0;
-            for ( int j = 0; j <= i; ++j )
+            // if the split did nothing, fall back to just splitting the nodes equally into two categories
+            if ( midShape != endShape && midShape != beginShape )
             {
-                b0.Union( buckets[j].aabb );
-                count0 += buckets[j].count;
-            }
-            for ( int j = i + 1; j < nBuckets; ++j )
-            {
-                b1.Union( buckets[j].aabb );
-                count1 += buckets[j].count;
-            }
-            cost[i] = 0.5f + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / node->aabb.SurfaceArea();
-        }
-
-        float minCost = cost[0];
-        int minCostSplitBucket = 0;
-        for ( int i = 1; i < nBuckets - 1; ++i )
-        {
-            if ( cost[i] < minCost )
-            {
-                minCost = cost[i];
-                minCostSplitBucket = i;
+                break;
             }
         }
-
-        // see if the split is actually worth it
-        int maxTrisInALeaf = 4;
-        float leafCost     = (float)numShapes;
-        if ( numShapes > maxTrisInALeaf || minCost < leafCost )
+        case BVH::SplitMethod::EqualCounts:
         {
-            midShape = std::partition( beginShape, endShape, [&]( const BVHBuildShapeInfo& tri )
+            midShape = &buildShapeInfos[(start + end) / 2];
+            std::nth_element( beginShape, midShape, endShape, [dim]( const BVHBuildShapeInfo &a, const BVHBuildShapeInfo &b ) { return a.centroid[dim] < b.centroid[dim]; } );
+            break;
+        }
+        case BVH::SplitMethod::SAH:
+        default:
+        {
+            // if there are only a few primitives, it doesnt really matter to bother with SAH
+            if ( numShapes <= 4 )
+            {
+                midShape = &buildShapeInfos[(start + end) / 2];
+                std::nth_element( beginShape, midShape, endShape, [dim]( const BVHBuildShapeInfo &a, const BVHBuildShapeInfo &b ) { return a.centroid[dim] < b.centroid[dim]; } );
+            }
+            else
+            {
+                const int nBuckets = 12;
+                struct BucketInfo
                 {
-                    int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( tri.centroid )[dim] ) );
-                    return b <= minCostSplitBucket;
-                });
-        }
-        else
-        {
-            node->firstIndex = static_cast< uint32_t >( orderedShapes.size() );
-            node->numShapes  = end - start;
-            for ( uint32_t i = 0; i < node->numShapes; ++i )
-            {
-                orderedShapes.push_back( buildShapeInfos[start + i].shape );
+                    AABB aabb;
+                    int count = 0;
+                };
+                BucketInfo buckets[nBuckets];
+
+                // bin all of the primitives into their corresponding buckets and update the bucket AABB
+                for ( int i = start; i < end; ++i )
+                {
+                    int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( buildShapeInfos[i].centroid )[dim] ) );
+                    buckets[b].count++;
+                    buckets[b].aabb.Union( buildShapeInfos[i].aabb );
+                }
+
+                float cost[nBuckets - 1];
+                // Compute costs for splitting after each bucket
+                for ( int i = 0; i < nBuckets - 1; ++i )
+                {
+                    AABB b0, b1;
+                    int count0 = 0, count1 = 0;
+                    for ( int j = 0; j <= i; ++j )
+                    {
+                        b0.Union( buckets[j].aabb );
+                        count0 += buckets[j].count;
+                    }
+                    for ( int j = i + 1; j < nBuckets; ++j )
+                    {
+                        b1.Union( buckets[j].aabb );
+                        count1 += buckets[j].count;
+                    }
+                    cost[i] = 0.5f + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / node->aabb.SurfaceArea();
+                }
+
+                float minCost = cost[0];
+                int minCostSplitBucket = 0;
+                for ( int i = 1; i < nBuckets - 1; ++i )
+                {
+                    if ( cost[i] < minCost )
+                    {
+                        minCost = cost[i];
+                        minCostSplitBucket = i;
+                    }
+                }
+
+                // see if the split is actually worth it
+                float leafCost       = (float)numShapes;
+                int maxShapesPerLeaf = 4;
+                if ( numShapes > maxShapesPerLeaf || minCost < leafCost )
+                {
+                    midShape = std::partition( beginShape, endShape, [&]( const BVHBuildShapeInfo& tri )
+                        {
+                            int b = std::min( nBuckets - 1, static_cast< int >( nBuckets * centroidAABB.Offset( tri.centroid )[dim] ) );
+                            return b <= minCostSplitBucket;
+                        });
+                }
+                else
+                {
+                    node->firstIndex = static_cast< uint32_t >( orderedShapes.size() );
+                    node->numShapes  = end - start;
+                    for ( uint32_t i = 0; i < node->numShapes; ++i )
+                    {
+                        orderedShapes.push_back( buildShapeInfos[start + i].shape );
+                    }
+                    return node;
+                }
             }
-            return node;
         }
     }
 
     int cutoff        = start + static_cast< int >( midShape - &buildShapeInfos[start] );
-    node->firstChild  = BuildBVHInteral( buildShapeInfos, start, cutoff, orderedShapes, totalNodes );
-    node->secondChild = BuildBVHInteral( buildShapeInfos, cutoff, end, orderedShapes, totalNodes );
+    node->firstChild  = BuildBVHInteral( buildShapeInfos, start, cutoff, orderedShapes, totalNodes, splitMethod );
+    node->secondChild = BuildBVHInteral( buildShapeInfos, cutoff, end,   orderedShapes, totalNodes, splitMethod );
 
     return node;
 }
@@ -202,7 +217,7 @@ void BVH::Build( std::vector< std::shared_ptr< Shape > >& listOfShapes )
     std::vector< std::shared_ptr< Shape > > orderedShapes;
     orderedShapes.reserve( shapes.size() );
     uint32_t totalNodes = 0;
-    auto buildRootNode = BuildBVHInteral( buildShapes, 0, static_cast< int >( shapes.size() ), orderedShapes, totalNodes );
+    auto buildRootNode = BuildBVHInteral( buildShapes, 0, static_cast< int >( shapes.size() ), orderedShapes, totalNodes, splitMethod );
     shapes = std::move( orderedShapes );
 
     // flatten the bvh
