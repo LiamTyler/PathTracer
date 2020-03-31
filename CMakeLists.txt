@@ -47,6 +47,8 @@ set(
     src/aabb.hpp
     src/anti_aliasing.cpp
     src/anti_aliasing.hpp
+    src/bvh.cpp
+    src/bvh.hpp
     src/camera.cpp
     src/camera.hpp
     src/configuration.hpp

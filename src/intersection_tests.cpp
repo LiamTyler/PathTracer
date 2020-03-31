@@ -7,7 +7,7 @@ namespace PT
 namespace intersect
 {
 
-    bool RaySphere( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& spherePos, float radius, float& t )
+    bool RaySphere( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& spherePos, float radius, float& t, float maxT )
     {
         glm::vec3 OC = rayPos - spherePos;
         float a      = glm::dot( rayDir, rayDir );
@@ -27,12 +27,12 @@ namespace intersect
             t = (-b + d) / (2*a);
         }
 
-        return t > 0;
+        return t < maxT && t > 0;
     }
 
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
     bool RayTriangle( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& v0,
-                      const glm::vec3& v1, const glm::vec3& v2, float& t, float& u, float& v )
+                      const glm::vec3& v1, const glm::vec3& v2, float& t, float& u, float& v, float maxT )
     {
         glm::vec3 v0v1 = v1 - v0;
         glm::vec3 v0v2 = v2 - v0;
@@ -62,10 +62,10 @@ namespace intersect
 
         t = glm::dot( v0v2, qvec) * invDet;
 
-        return t > 0;
+        return t < maxT && t > 0;
     }
 
-    bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax, float currentT )
+    bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax, float maxT )
     {
         float tx1 = (aabbMin.x - rayPos.x) * invRayDir.x;
         float tx2 = (aabbMax.x - rayPos.x) * invRayDir.x;
@@ -85,10 +85,10 @@ namespace intersect
         tmin = std::max( tmin, std::min( tz1, tz2 ) );
         tmax = std::min( tmax, std::max( tz1, tz2 ) );
 
-        return (tmin < currentT) && (tmax >= std::max( 0.0f, tmin ));
+        return (tmin < maxT) && (tmax >= std::max( 0.0f, tmin ));
     }
 
-    bool RayAABBFastest( const glm::vec3& rayPos, const glm::vec3& invRayDir, const int isDirNeg[3], const glm::vec3& aabbMin, const glm::vec3& aabbMax, float currentT )
+    bool RayAABBFastest( const glm::vec3& rayPos, const glm::vec3& invRayDir, const int isDirNeg[3], const glm::vec3& aabbMin, const glm::vec3& aabbMax, float maxT )
     {
         float tMin  = ((isDirNeg[0] ? aabbMax : aabbMin).x - rayPos.x) * invRayDir.x;
         float tMax  = ((1 - isDirNeg[0] ? aabbMax : aabbMin).x - rayPos.x) * invRayDir.x;
@@ -106,7 +106,7 @@ namespace intersect
         if ( tMin > tzMax || tzMin > tMax ) return false;
         if ( tzMin > tMin ) tMin = tzMin;
         if ( tzMax < tMax ) tMax = tzMax;
-        return (tMin < currentT) && (tMax > 0);
+        return (tMin < maxT) && (tMax > 0);
     }
 
 } // namespace intersect 

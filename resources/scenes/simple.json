@@ -1,17 +1,18 @@
 {
     "OutputImageData": {
-        "resolution": [ 1000, 1000 ],
+        "resolution": [ 500, 500 ],
         "filename": "outupt.png"
     },
     "Camera": {
-        "position": [ 0, 0, 0 ],
-        "rotation": [ 0, 0, 0 ],
+        "position": [ 0, 5, 10 ],
+        "rotation": [ -20, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
         "antialiasing": "ROTATED_2X2_GRID"
     },
+    "MaxDepth": 10,
     "AmbientLight": {
         "color": [ 0.0, 0.0, 0.0 ]
     },
@@ -31,6 +32,10 @@
         "back": "images/water/back.jpg",
         "front": "images/water/front.jpg"
     },
+    "Texture": {
+        "name": "cockatoo",
+        "filename": "images/cockatoo.jpg"
+    },
     "Material": {
         "name": "floor",
         "albedo": [ 0.4, 0.4, 0.4 ],
@@ -44,6 +49,14 @@
         "Ks": [ 0, 0, 0 ],
         "Ns": 40,
         "ior": 1
+    },
+    "Material": {
+        "name": "cockatoo",
+        "albedo": [ 1, 1, 1 ],
+        "Ks": [ 0, 0, 0 ],
+        "Ns": 40,
+        "ior": 1,
+        "albedoTexture": "cockatoo"
     },
     "Material": {
         "name": "mirror",
@@ -60,38 +73,50 @@
         "ior": 1.5,
         "Tr": [ 1, 1, 1 ]
     },
-    "Model": {
-        "name": "plane",
-        "filename": "models/plane.obj"
+    "Sphere": {
+        "material": "green",
+        "position": [ -5, 0, -5 ],
+        "radius": 1
     },
-    "Model": {
-        "name": "dragon",
-        "filename": "models/dragon.obj"
+    "Sphere": {
+        "material": "mirror",
+        "position": [ 0, 0, -5 ],
+        "radius": 1
     },
-    "ModelInstance": {
-        "model": "plane",
-        "material": "floor",
-        "transform": {
-            "position": [ 0, -2, -10 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 10, 10, 10 ]
-        }
-    },
-    "ModelInstance": {
-        "model": "dragon",
+    "Sphere": {
         "material": "glass",
-        "transform": {
-            "position": [ 0, 0, -7 ],
-            "rotation": [ 0, 90, 0 ],
-            "scale": [ 3, 3, 3  ]
-        }
+        "position": [ 5, 0, -5 ],
+        "radius": 1
     },
-    "_Sphere": {
+    "Sphere": {
         "material": "glass",
-        "transform": {
-            "position": [ 0, 0, -5 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 1, 1, 1 ]
-        }
+        "position": [ -5, 0, 0 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "material": "cockatoo",
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 45, 45, 0 ],
+        "radius": 3
+    },
+    "Sphere": {
+        "material": "mirror",
+        "position": [ 5, 0, 0 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "material": "glass",
+        "position": [ -5, 0, 5 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "material": "glass",
+        "position": [ 0, 0, 5 ],
+        "radius": 1
+    },
+    "Sphere": {
+        "material": "green",
+        "position": [ 5, 0, 5 ],
+        "radius": 1
     }
 }

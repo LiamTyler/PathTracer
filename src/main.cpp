@@ -21,8 +21,7 @@ int main( int argc, char** argv )
         std::cout << "Could not load scene file '" << argv[1] << "'" << std::endl;
         return 0;
     }
-    pathTracer.InitImage( scene.imageResolution.x, scene.imageResolution.y );
-    
+
     pathTracer.Render( &scene );
 
     if ( !pathTracer.SaveImage( scene.outputImageFilename ) )

@@ -18,14 +18,14 @@ struct IntersectionData
 namespace intersect
 {
 
-    bool RaySphere( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& spherePos, float sphereRadius, float& t );
+    bool RaySphere( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& spherePos, float sphereRadius, float& t, float maxT = FLT_MAX );
 
     bool RayTriangle( const glm::vec3& rayPos, const glm::vec3& rayDir, const glm::vec3& v0,
-                      const glm::vec3& v1, const glm::vec3& v2, float& t, float& u, float& v );
+                      const glm::vec3& v1, const glm::vec3& v2, float& t, float& u, float& v, float maxT = FLT_MAX );
 
-    bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax, float currentT = FLT_MAX );
+    bool RayAABB( const glm::vec3& rayPos, const glm::vec3& invRayDir, const glm::vec3& aabbMin, const glm::vec3& aabbMax, float maxT = FLT_MAX );
 
-    bool RayAABBFastest( const glm::vec3& rayPos, const glm::vec3& invRayDir, const int isDirNeg[3], const glm::vec3& aabbMin, const glm::vec3& aabbMax, float currentT = FLT_MAX );
+    bool RayAABBFastest( const glm::vec3& rayPos, const glm::vec3& invRayDir, const int isDirNeg[3], const glm::vec3& aabbMin, const glm::vec3& aabbMax, float maxT = FLT_MAX );
 
 } // namespace intersect 
 } // namespace PT

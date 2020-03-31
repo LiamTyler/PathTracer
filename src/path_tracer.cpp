@@ -7,19 +7,13 @@
 #include <atomic>
 
 #define TONEMAP_AND_GAMMA NOT_IN_USE
-#define PBSTR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-#define PBWIDTH 60
+#define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+#define PROGRESS_BAR_WIDTH 60
 
 namespace PT
 {
 
 glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth );
-
-void PathTracer::InitImage( int width, int height )
-{
-    Random::SetSeed( time( NULL ) );
-    renderedImage = Image( width, height );
-}
 
 float Fresnel(const glm::vec3& I, const glm::vec3& N, const float &ior )
 {
@@ -73,11 +67,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     auto N           = hitData.normal;
     const auto V     = -ray.direction;
     const auto& mat  = *hitData.material;
-    glm::vec3 albedo = mat.albedo;
-    if ( mat.albedoTexture )
-    {
-        albedo *= glm::vec3( mat.albedoTexture->GetPixel( hitData.texCoords.x, hitData.texCoords.y ) );
-    }
+    glm::vec3 albedo = mat.GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
 
     // ambient
     glm::vec3 color = albedo * scene->ambientLight;
@@ -134,20 +124,13 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
 {
     glm::vec3 pixelColor;
     IntersectionData hitData;
-    if ( depth < 10 && scene->Intersect( ray, hitData ) )
+    if ( depth < scene->maxDepth && scene->Intersect( ray, hitData ) )
     {
         pixelColor = Illuminate( scene, ray, hitData, depth );
     }
     else
     {
-        if ( scene->skybox )
-        {
-            pixelColor = glm::vec3( scene->skybox->GetPixel( ray ) );
-        }
-        else
-        {
-            pixelColor = scene->backgroundColor;
-        }
+        pixelColor = scene->GetBackgroundColor( ray );
     }
 
     return pixelColor;
@@ -155,6 +138,10 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
 
 void PathTracer::Render( Scene* scene )
 {
+    Random::SetSeed( time( NULL ) );
+    renderedImage = Image( scene->imageResolution.x, scene->imageResolution.y );
+    std::cout << "\nRendering scene..." << std::endl;
+
     auto timeStart = Time::GetTimePoint();
     assert( renderedImage.GetPixels() );
     Camera& cam = scene->camera;
@@ -169,7 +156,7 @@ void PathTracer::Render( Scene* scene )
     auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
     auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
 
-    std::atomic< int > renderProgress(0);
+    std::atomic< int > renderProgress( 0 );
     int onePercent = static_cast< int >( std::ceil( renderedImage.GetHeight() / 100.0f ) );
 
     #pragma omp parallel for schedule( dynamic )
@@ -198,9 +185,9 @@ void PathTracer::Render( Scene* scene )
         {
             float progress = rowsCompleted / (float) renderedImage.GetHeight();
             int val  = (int) (progress * 100);
-            int lpad = (int) (progress * PBWIDTH);
-            int rpad = PBWIDTH - lpad;
-            printf( "\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "" );
+            int lpad = (int) (progress * PROGRESS_BAR_WIDTH);
+            int rpad = PROGRESS_BAR_WIDTH - lpad;
+            printf( "\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "" );
             fflush( stdout );
         }
     }

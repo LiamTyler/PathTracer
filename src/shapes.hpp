@@ -14,23 +14,20 @@ struct Shape
     Shape() = default;
 
     virtual bool Intersect( const Ray& ray, IntersectionData* hitData ) const = 0;
+    virtual AABB WorldSpaceAABB() const = 0;
 };
 
 struct Sphere : public Shape
 {
     std::shared_ptr< Material > material;
-    Transform transform;
+    glm::vec3 position = glm::vec3( 0 );
+    glm::vec3 rotation = glm::vec3( 0 );
+    float radius       = 1;
+
+    Transform worldToLocal;
 
     bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
-};
-
-struct ModelInstance : public Shape
-{
-    Transform transform;
-    std::shared_ptr< Model > model;
-    std::vector< std::shared_ptr< Material > > materials;
-
-    bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
+    AABB WorldSpaceAABB() const override;
 };
 
 } // namespace PT

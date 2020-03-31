@@ -18,16 +18,22 @@ Scene::~Scene()
 
 static Transform ParseTransform( rapidjson::Value& value )
 {
-    static FunctionMapper< void, Transform& > mapping(
+    struct Vectors
     {
-        { "position", []( rapidjson::Value& v, Transform& t ) { t.position = ParseVec3( v ); } },
-        { "rotation", []( rapidjson::Value& v, Transform& t ) { t.rotation = glm::radians( ParseVec3( v ) ); } },
-        { "scale",    []( rapidjson::Value& v, Transform& t ) { t.scale    = ParseVec3( v ); } },
+        glm::vec3 position = glm::vec3( 0 );
+        glm::vec3 rotation = glm::vec3( 0 );
+        glm::vec3 scale    = glm::vec3( 1 );
+    };
+    static FunctionMapper< void, Vectors& > mapping(
+    {
+        { "position", []( rapidjson::Value& v, Vectors& t ) { t.position = ParseVec3( v ); } },
+        { "rotation", []( rapidjson::Value& v, Vectors& t ) { t.rotation = glm::radians( ParseVec3( v ) ); } },
+        { "scale",    []( rapidjson::Value& v, Vectors& t ) { t.scale    = ParseVec3( v ); } },
     });
-    Transform t = { glm::vec3( 0 ), glm::vec3( 0 ), glm::vec3( 1 ) };
-    mapping.ForEachMember( value, t );
+    Vectors v;
+    mapping.ForEachMember( value, v );
 
-    return t;
+    return Transform( v.position, v.rotation, v.scale );
 }
 
 static void ParseAmbientLight( rapidjson::Value& v, Scene* scene )
@@ -98,6 +104,11 @@ static void ParseMaterial( rapidjson::Value& v, Scene* scene )
     ResourceManager::AddMaterial( mat );
 }
 
+static void ParseMaxDepth( rapidjson::Value& v, Scene* scene )
+{
+    scene->maxDepth = v.GetInt();
+}
+
 static void ParseModel( rapidjson::Value& v, Scene* scene )
 {
     static FunctionMapper< void, ModelCreateInfo& > mapping(
@@ -118,6 +129,7 @@ static void ParseModel( rapidjson::Value& v, Scene* scene )
 
 static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
 {
+    /*
     static FunctionMapper< void, ModelInstance& > mapping(
     {
         { "transform", []( rapidjson::Value& v, ModelInstance& o )
@@ -156,6 +168,7 @@ static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
         o->materials = o->model->materials;
     }
     assert( o->materials.size() );
+    */
 }
 
 static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
@@ -190,17 +203,16 @@ static void ParseSphere( rapidjson::Value& value, Scene* scene )
 {
     static FunctionMapper< void, Sphere& > mapping(
     {
-        { "transform", []( rapidjson::Value& v, Sphere& o )
-            {
-                o.transform = ParseTransform( v );
-            }
-        },
+        { "position", []( rapidjson::Value& v, Sphere& s ) { s.position = ParseVec3( v ); } },
+        { "rotation", []( rapidjson::Value& v, Sphere& s ) { s.rotation = glm::radians( ParseVec3( v ) ); } },
+        { "radius",   []( rapidjson::Value& v, Sphere& s ) { s.radius   = ParseNumber< float >( v ); } },
         { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
     });
 
     auto o = std::make_shared< Sphere >();
     scene->shapes.push_back( o );
     mapping.ForEachMember( value, *o );
+    o->worldToLocal = Transform( o->position, o->rotation, glm::vec3( o->radius ) ).Inverse();
 }
 
 static void ParseSkybox( rapidjson::Value& value, Scene* scene )
@@ -263,8 +275,9 @@ bool Scene::Load( const std::string& filename )
         { "Camera",           ParseCamera },
         { "DirectionalLight", ParseDirectionalLight },
         { "Material",         ParseMaterial },
+        { "MaxDepth",         ParseMaxDepth },
         { "Model",            ParseModel },
-        { "ModelInstance",    ParseModelInstance },
+        //{ "ModelInstance",    ParseModelInstance },
         { "OutputImageData",  ParseOutputImageData },
         { "PointLight",       ParsePointLight },
         { "Skybox",           ParseSkybox },
@@ -284,11 +297,6 @@ bool Scene::Load( const std::string& filename )
         {
             numSpheres += 1;
         }
-        if ( std::dynamic_pointer_cast< ModelInstance >( shape ) )
-        {
-            numModelInstances += 1;
-            totalTriangles += std::dynamic_pointer_cast< ModelInstance >( shape )->model->indices.size() / 3;
-        }
     }
     std::cout << "\nScene '" << filename << "' stats:" << std::endl;
     std::cout << "------------------------------------------------------" << std::endl;
@@ -297,6 +305,9 @@ bool Scene::Load( const std::string& filename )
     std::cout << "\tSpheres: " << numSpheres << std::endl;
     std::cout << "\tModelInstances: " << numModelInstances << std::endl;
     std::cout << "Total number of triangles: " << totalTriangles << std::endl;
+    auto bvhTime = Time::GetTimePoint();
+    bvh.Build( shapes );
+    std::cout << "BVH built in: " << Time::GetDuration( bvhTime ) / 1000.0f << " seconds" << std::endl;
 
     return true;
 }
@@ -304,13 +315,23 @@ bool Scene::Load( const std::string& filename )
 bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
     hitData.t = FLT_MAX;
-
+    /*
     for ( const auto& shape : shapes )
     {
         shape->Intersect( ray, &hitData );
     }
-
     return hitData.t != FLT_MAX && hitData.t > 0;
+    */
+    return bvh.Intersect( ray, &hitData );
+}
+
+glm::vec3 Scene::GetBackgroundColor( const Ray& ray )
+{
+    if ( skybox )
+    {
+        return glm::vec3( skybox->GetPixel( ray ) );
+    }
+    return backgroundColor;
 }
 
 } // namespace PT

@@ -3,24 +3,30 @@
 namespace PT
 {
 
-glm::mat4 Transform::ModelMatrix() const
+Transform::Transform() : matrix( glm::mat4( 1 ) ) {}
+
+Transform::Transform( const glm::mat4& mat ) : matrix( mat ) {}
+
+Transform::Transform( const glm::vec3& position, const glm::vec3& rotation, const glm::vec3& scale )
 {
-    glm::mat4 model( 1 );
-    model = glm::translate( model, position );
-    model = glm::rotate( model, rotation.y, glm::vec3( 0, 1, 0 ) );
-    model = glm::rotate( model, rotation.x, glm::vec3( 1, 0, 0 ) );
-    model = glm::rotate( model, rotation.z, glm::vec3( 0, 0, 1 ) );
-    model = glm::scale( model, scale );
-     
-    return model;
+    matrix = glm::mat4( 1 );
+    matrix = glm::translate( matrix, position );
+    matrix = glm::rotate( matrix, rotation.y, glm::vec3( 0, 1, 0 ) );
+    matrix = glm::rotate( matrix, rotation.x, glm::vec3( 1, 0, 0 ) );
+    matrix = glm::rotate( matrix, rotation.z, glm::vec3( 0, 0, 1 ) );
+    matrix = glm::scale( matrix, scale );
 }
 
-Ray Transform::WorldToLocal( const Ray& ray ) const
+Transform Transform::Inverse() const
 {
-    glm::mat4 model = glm::inverse( ModelMatrix() );
+    return Transform( glm::inverse( matrix ) );
+}
+
+Ray Transform::operator*( const Ray& ray ) const
+{
     Ray ret;
-    ret.direction = glm::vec3( model * glm::vec4( ray.direction, 0 ) );
-    ret.position  = glm::vec3( model * glm::vec4( ray.position, 1 ) );
+    ret.direction = glm::vec3( matrix * glm::vec4( ray.direction, 0 ) );
+    ret.position  = glm::vec3( matrix * glm::vec4( ray.position, 1 ) );
 
     return ret;
 }

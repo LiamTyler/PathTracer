@@ -16,6 +16,17 @@ struct Material : public Resource
     glm::vec3 Tr     = glm::vec3( 0 );
     float ior        = 1.0f;
     std::shared_ptr< Texture > albedoTexture;
+
+    glm::vec3 GetAlbedo( float u, float v ) const
+    {
+        glm::vec3 color = albedo;
+        if ( albedoTexture )
+        {
+            color *= glm::vec3( albedoTexture->GetPixel( u, v ) );
+        }
+
+        return color;
+    }
 };
 
 } // namespace PT
