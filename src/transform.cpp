@@ -22,6 +22,21 @@ Transform Transform::Inverse() const
     return Transform( glm::inverse( matrix ) );
 }
 
+Transform Transform::Transpose() const
+{
+    return Transform( glm::transpose( matrix ) );
+}
+
+glm::vec3 Transform::TransformPoint( const glm::vec3& p ) const
+{
+    return glm::vec3( matrix * glm::vec4( p, 1 ) );
+}
+
+glm::vec3 Transform::TransformVector( const glm::vec3& v ) const
+{
+    return glm::vec3( matrix * glm::vec4( v, 0 ) );
+}
+
 Ray Transform::operator*( const Ray& ray ) const
 {
     Ray ret;
@@ -29,6 +44,11 @@ Ray Transform::operator*( const Ray& ray ) const
     ret.position  = glm::vec3( matrix * glm::vec4( ray.position, 1 ) );
 
     return ret;
+}
+
+glm::vec4 Transform::operator*( const glm::vec4& v ) const
+{
+    return matrix * v;
 }
 
 } // namespace PT

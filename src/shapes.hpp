@@ -1,18 +1,21 @@
 #pragma once
 
-#include "glm/glm.hpp"
+#include "aabb.hpp"
+#include "intersection_tests.hpp"
 #include "resource/material.hpp"
-#include "resource/model.hpp"
 #include "transform.hpp"
 #include <memory>
 
 namespace PT
 {
 
+class ModelInstance;
+
 struct Shape
 {
     Shape() = default;
 
+    virtual Material* GetMaterial() const = 0;
     virtual bool Intersect( const Ray& ray, IntersectionData* hitData ) const = 0;
     virtual AABB WorldSpaceAABB() const = 0;
 };
@@ -26,6 +29,19 @@ struct Sphere : public Shape
 
     Transform worldToLocal;
 
+    Material* GetMaterial() const override;
+    bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
+    AABB WorldSpaceAABB() const override;
+};
+
+struct Triangle : public Shape
+{
+    std::shared_ptr< ModelInstance > model;
+    
+    uint32_t i0, i1, i2;
+    uint32_t materialIndex;
+
+    Material* GetMaterial() const override;
     bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
     AABB WorldSpaceAABB() const override;
 };

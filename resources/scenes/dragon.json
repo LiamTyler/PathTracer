@@ -34,7 +34,7 @@
     "Material": {
         "name": "floor",
         "albedo": [ 0.6, 0.6, 0.6 ],
-        "Ks": [ 0.5, 0.5, 0.5 ],
+        "Ks": [ 0, 0, 0 ],
         "Ns": 90,
         "ior": 1
     },
@@ -59,7 +59,7 @@
     },
     "Model": {
         "name": "dragon",
-        "filename": "models/bunny.ply"
+        "filename": "models/dragon.obj"
     },
     "_ModelInstance": {
         "model": "plane",
@@ -72,11 +72,11 @@
     },
     "ModelInstance": {
         "model": "dragon",
-        "material": "red",
+        "material": "glass",
         "transform": {
             "position": [ 0, 0, -4 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 1, 1, 1 ]
+            "rotation": [ 0, 90, 0 ],
+            "scale": [ 2, 2, 2 ]
         }
     }
 }

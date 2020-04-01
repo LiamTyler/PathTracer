@@ -156,46 +156,33 @@ static void ParseModel( rapidjson::Value& v, Scene* scene )
 
 static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
 {
-    /*
-    static FunctionMapper< void, ModelInstance& > mapping(
+    struct ModelInstanceCreateInfo
     {
-        { "transform", []( rapidjson::Value& v, ModelInstance& o )
-            {
-                o.transform = ParseTransform( v );
-            }
-        },
-        { "model",     []( rapidjson::Value& v, ModelInstance& o )
-            {
-                o.model = ResourceManager::GetModel( v.GetString() );
-                assert( o.model );
-            }
-        },
-        { "material",  []( rapidjson::Value& v, ModelInstance& o )
-            {
-                auto mat = ResourceManager::GetMaterial( v.GetString() );
-                assert( mat );
-                assert( o.model ); // need to specify model before material
-                o.materials.resize( o.model->meshes.size() );
-                for ( auto& m : o.materials )
-                {
-                    m = mat;
-                }
-            }
-        },
+        Transform transform;
+        std::string modelName;
+        std::string materialName;
+    };
+
+    static FunctionMapper< void, ModelInstanceCreateInfo& > mapping(
+    {
+        { "transform", []( rapidjson::Value& v, ModelInstanceCreateInfo& o ) { o.transform    = ParseTransform( v ); } },
+        { "model",     []( rapidjson::Value& v, ModelInstanceCreateInfo& o ) { o.modelName    = v.GetString(); } },
+        { "material",  []( rapidjson::Value& v, ModelInstanceCreateInfo& o ) { o.materialName = v.GetString(); } },
     });
 
-    auto o = std::make_shared< ModelInstance >();
-    scene->shapes.push_back( o );
-    mapping.ForEachMember( value, *o );
-    assert( o->model );
+    ModelInstanceCreateInfo info;
+    mapping.ForEachMember( value, info );
 
-    // if no custom materials were specified, use the ones the model was loaded with
-    if ( o->materials.size() == 0 )
+    std::shared_ptr< Model > model = ResourceManager::GetModel( info.modelName );
+    assert( model );
+    std::shared_ptr< Material > material = nullptr;
+    if ( info.materialName != "" )
     {
-        o->materials = o->model->materials;
+        material = ResourceManager::GetMaterial( info.materialName );
+        assert( material );
     }
-    assert( o->materials.size() );
-    */
+    auto modelInstance = std::make_shared< ModelInstance >( *model, info.transform, material );
+    modelInstance->EmitTriangles( scene->shapes, modelInstance );
 }
 
 static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )
@@ -305,7 +292,7 @@ bool Scene::Load( const std::string& filename )
         { "Material",         ParseMaterial },
         { "MaxDepth",         ParseMaxDepth },
         { "Model",            ParseModel },
-        //{ "ModelInstance",    ParseModelInstance },
+        { "ModelInstance",    ParseModelInstance },
         { "OutputImageData",  ParseOutputImageData },
         { "PointLight",       ParsePointLight },
         { "Skybox",           ParseSkybox },
@@ -324,6 +311,10 @@ bool Scene::Load( const std::string& filename )
         if ( std::dynamic_pointer_cast< Sphere >( shape ) )
         {
             numSpheres += 1;
+        }
+        if ( std::dynamic_pointer_cast< Triangle >( shape ) )
+        {
+            totalTriangles += 1;
         }
     }
     std::cout << "\nScene '" << filename << "' stats:" << std::endl;
@@ -344,11 +335,11 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
 {
     hitData.t = FLT_MAX;
     return bvh.Intersect( ray, &hitData );
-    // for ( const auto& shape : shapes )
-    // {
-    //     shape->Intersect( ray, &hitData );
-    // }
-    // return hitData.t != FLT_MAX;
+    //for ( const auto& shape : bvh.shapes )
+    //{
+    //    shape->Intersect( ray, &hitData );
+    //}
+    //return hitData.t != FLT_MAX;
 }
 
 glm::vec3 Scene::GetBackgroundColor( const Ray& ray )

@@ -108,13 +108,8 @@ namespace PT
         return true;
     }
 
-    Model::~Model()
-    {
-    }
-
     bool Model::Load( const ModelCreateInfo& createInfo )
     {
-        auto loadTime = Time::GetTimePoint();
         name = createInfo.name;
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile( createInfo.filename.c_str(),
@@ -185,8 +180,31 @@ namespace PT
                 indices.push_back( face.mIndices[0] + indexOffset );
                 indices.push_back( face.mIndices[1] + indexOffset );
                 indices.push_back( face.mIndices[2] + indexOffset );
+                triangleMaterialIndices.push_back( meshes[meshIdx].materialIndex );
             }
             indexOffset = static_cast< uint32_t >( vertices.size() );
+        }
+
+        if ( tangents.size() == 0 )
+        {
+            std::cout << "WARNING: model '" << name << "' had no uvs, so assimp could not generate tangents. Generating arbitrary tangents." << std::endl;
+            tangents.resize( vertices.size(), glm::vec3( 0 ) );
+            for ( size_t i = 0; i < indices.size(); i += 3 )
+            {
+                uint32_t i0  = indices[i + 0];
+                uint32_t i1  = indices[i + 1];
+                glm::vec3 v0 = vertices[i0];
+                glm::vec3 v1 = vertices[i1];
+                glm::vec3 t  = glm::normalize( v1 - v0 );
+                if ( tangents[i0] == glm::vec3( 0 ) )
+                {
+                    tangents[i0] = t;
+                }
+                if ( tangents[i1] == glm::vec3( 0 ) )
+                {
+                    tangents[i1] = t;
+                }
+            }
         }
 
         if ( !ParseMaterials( createInfo.filename, this, scene ) )
@@ -195,7 +213,6 @@ namespace PT
             return false;
         }
         RecalculateNormals();
-        std::cout << "Model '" << name << "' loaded in: " << Time::GetDuration( loadTime ) / 1000.0f << " seconds" << std::endl;
 
         return true;
     }
@@ -218,6 +235,49 @@ namespace PT
         for ( auto& normal : normals )
         {
             normal = glm::normalize( normal );
+        }
+    }
+
+    ModelInstance::ModelInstance( const Model& model, const Transform& _localToWorld, std::shared_ptr< Material > newMaterial ) :
+        localToWorld( _localToWorld ),
+        worldToLocal( _localToWorld.Inverse() )
+    {
+        size_t numVertices = model.vertices.size();
+        assert( model.normals.size() == numVertices && model.tangents.size() == numVertices );
+        vertices.resize( numVertices );
+        for ( size_t i = 0; i < numVertices; ++i )
+            vertices[i] = localToWorld.TransformPoint( model.vertices[i] );
+        normals.resize( numVertices );
+        for ( size_t i = 0; i < numVertices; ++i )
+            normals[i] = glm::normalize( worldToLocal.Transpose().TransformVector( model.normals[i] ) );
+        tangents.resize( numVertices );
+        for ( size_t i = 0; i < numVertices; ++i )
+            tangents[i] = localToWorld.TransformVector( model.tangents[i] );
+        uvs = model.uvs;
+        indices = model.indices;
+        triangleMaterialIndices = model.triangleMaterialIndices;
+        materials = model.materials;
+        if ( newMaterial )
+        {
+            for ( auto& mat : materials )
+            {
+                mat = newMaterial;
+            }
+        }
+    }
+
+    void ModelInstance::EmitTriangles( std::vector< std::shared_ptr< Shape > >& shapes, std::shared_ptr< ModelInstance > modelPtr ) const
+    {
+        shapes.reserve( shapes.size() + indices.size() / 3 );
+        for ( size_t face = 0; face < indices.size() / 3; ++face )
+        {
+            auto tri           = std::make_shared< Triangle >();
+            tri->model         = modelPtr;
+            tri->materialIndex = triangleMaterialIndices[face];
+            tri->i0            = indices[3*face + 0];
+            tri->i1            = indices[3*face + 1];
+            tri->i2            = indices[3*face + 2];
+            shapes.push_back( tri );
         }
     }
 

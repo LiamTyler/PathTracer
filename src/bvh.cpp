@@ -18,7 +18,7 @@ struct BVHBuildNode
     std::unique_ptr< BVHBuildNode > secondChild;
     uint32_t firstIndex;
     uint32_t numShapes;
-    AABB aabb;
+    AABB aabb = AABB();
     uint8_t axis;
 };
 
@@ -48,9 +48,9 @@ static std::unique_ptr< BVHBuildNode > BuildBVHInteral( std::vector< BVHBuildSha
     {
         node->firstIndex = static_cast< uint32_t >( orderedShapes.size() );
         node->numShapes  = end - start;
-        for ( uint32_t i = 0; i < node->numShapes; ++i )
+        for ( int i = start; i < end; ++i )
         {
-            orderedShapes.push_back( buildShapeInfos[start + i].shape );
+            orderedShapes.push_back( buildShapeInfos[i].shape );
         }
         return node;
     }
@@ -160,9 +160,9 @@ static std::unique_ptr< BVHBuildNode > BuildBVHInteral( std::vector< BVHBuildSha
                 {
                     node->firstIndex = static_cast< uint32_t >( orderedShapes.size() );
                     node->numShapes  = end - start;
-                    for ( uint32_t i = 0; i < node->numShapes; ++i )
+                    for ( int i = start; i < end; ++i )
                     {
-                        orderedShapes.push_back( buildShapeInfos[start + i].shape );
+                        orderedShapes.push_back( buildShapeInfos[i].shape );
                     }
                     return node;
                 }
@@ -229,12 +229,12 @@ void BVH::Build( std::vector< std::shared_ptr< Shape > >& listOfShapes )
 
 bool BVH::Intersect( const Ray& ray, IntersectionData* hitData ) const
 {
-    glm::vec3 invRayDir = glm::vec3( 1.0 ) / ray.direction;
     int nodesToVisit[64];
     int currentNodeIndex = 0;
     int toVisitOffset    = 0;
-    int isDirNeg[3] = { invRayDir.x < 0, invRayDir.y < 0, invRayDir.z < 0 };
-    bool hitObject = false;
+    glm::vec3 invRayDir  = glm::vec3( 1.0 ) / ray.direction;
+    int isDirNeg[3]      = { invRayDir.x < 0, invRayDir.y < 0, invRayDir.z < 0 };
+    float oldMaxT = hitData->t;
 
     while ( true )
     {
@@ -246,7 +246,7 @@ bool BVH::Intersect( const Ray& ray, IntersectionData* hitData ) const
             {
                 for ( int shapeIndex = node.firstIndexOffset; shapeIndex < node.firstIndexOffset + node.numShapes; ++shapeIndex )
                 {
-                    hitObject = hitObject || shapes[shapeIndex]->Intersect( ray, hitData );
+                    shapes[shapeIndex]->Intersect( ray, hitData );
                 }
                 if ( toVisitOffset == 0 ) break;
                 currentNodeIndex = nodesToVisit[--toVisitOffset];
@@ -264,7 +264,7 @@ bool BVH::Intersect( const Ray& ray, IntersectionData* hitData ) const
         }
     }
 
-    return hitObject;
+    return hitData->t < oldMaxT;
 }
 
 AABB BVH::GetAABB() const

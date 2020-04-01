@@ -2,6 +2,7 @@
 
 #include "aabb.hpp"
 #include "shapes.hpp"
+#include <vector>
 
 namespace PT
 {
