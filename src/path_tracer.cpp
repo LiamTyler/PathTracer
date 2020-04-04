@@ -1,6 +1,7 @@
 #include "path_tracer.hpp"
 #include "core_defines.hpp"
 #include "glm/ext.hpp"
+#include "tonemap.hpp"
 #include "utils/random.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
@@ -145,18 +146,6 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
     return pixelColor;
 }
 
-glm::vec3 Uncharted2Tonemap( const glm::vec3& x)
-{
-    float A = 0.15f;
-    float B = 0.50f;
-    float C = 0.10f;
-    float D = 0.20f;
-    float E = 0.02f;
-    float F = 0.30f;
-    float W = 11.2f;
-    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
-}
-
 void PathTracer::Render( Scene* scene )
 {
     renderedImage = Image( scene->imageResolution.x, scene->imageResolution.y );
@@ -217,18 +206,9 @@ void PathTracer::Render( Scene* scene )
 #if USING( TONEMAP_AND_GAMMA )
     renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )
         {
-            glm::vec3 hdrColor       = cam.exposure * pixel;
-            // glm::vec3 tonemapped     = hdrColor / ( glm::vec3( 1 ) + hdrColor );
-            // glm::vec3 gammaCorrected = glm::pow( tonemapped, glm::vec3( 1.0f / cam.gamma ) );
-            // return gammaCorrected;
-
-            glm::vec3 curr = Uncharted2Tonemap( hdrColor );
-
-            glm::vec3 whiteScale = 1.0f/Uncharted2Tonemap( glm::vec3( 11.2f ) );
-            glm::vec3 color = curr*whiteScale;
-      
-            //return retColor = glm::pow(color,glm::vec3( 1.f/2.2f ) );
-            return color;
+            glm::vec3 tonemapped = Uncharted2Tonemap( pixel, cam.exposure );
+            //return GammaCorrect( tonemapped, cam.gamma );
+            return tonemapped;
         }
     );
 #endif // #if USING( TONEMAP_AND_GAMMA )

@@ -67,6 +67,8 @@ set(
     src/scene.hpp
     src/shapes.hpp
     src/shapes.cpp
+    src/tonemap.cpp
+    src/tonemap.hpp
     src/transform.cpp
     src/transform.hpp
     
