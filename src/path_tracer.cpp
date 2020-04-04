@@ -10,6 +10,7 @@
 #define TONEMAP_AND_GAMMA IN_USE
 #define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 #define PROGRESS_BAR_WIDTH 60
+#define EPSILON 0.0001f
 
 namespace PT
 {
@@ -18,6 +19,12 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth );
 
 float Fresnel(const glm::vec3& I, const glm::vec3& N, const float &ior )
 {
+    // this happens when the material is reflective, but not refractive
+    if ( ior == 1 )
+    {
+        return 1;
+    }
+
     float cosi = std::min( 1.0f, std::max( 1.0f, glm::dot( I, N ) ) );
     float etai = 1, etat = ior;
     if ( cosi > 0 )
@@ -68,7 +75,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     auto N             = hitData.normal;
     const auto V       = -ray.direction;
     const auto& mat    = *hitData.material;
-    glm::vec3 fixedPos = hitData.position + 0.0001f * N;
+    glm::vec3 fixedPos = hitData.position + EPSILON * N;
     glm::vec3 albedo   = mat.GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
 
     // ambient
@@ -87,7 +94,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
         
             IntersectionData shadowHit;
             Ray shadowRay( fixedPos, L );
-            if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t + 0.0001f < info.distanceToLight )
+            if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t + EPSILON < info.distanceToLight )
             {
                 continue;
             }
@@ -105,23 +112,21 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     glm::vec3 reflectColor( 0 );
     glm::vec3 refractColor( 0 );
 
-    float iorCurrent      = 1;
-    float iorEntering     = mat.ior;
     bool rayOutsideObject = glm::dot( N, ray.direction ) < 0;
-    float kr              = Fresnel( ray.direction, N, iorEntering );
+    float kr              = Fresnel( ray.direction, N, mat.ior );
     if ( !rayOutsideObject )
     {
         N = -N;
     }
     if ( mat.Ks != glm::vec3( 0 ) )
     {
-        Ray reflectRay( hitData.position + 0.0001f * N, glm::normalize( glm::reflect( ray.direction, N ) ) );
+        Ray reflectRay( hitData.position + EPSILON * N, glm::normalize( glm::reflect( ray.direction, N ) ) );
         reflectColor += mat.Ks * ShootRay( reflectRay, scene, depth + 1 );
     }
 
     if ( mat.Tr != glm::vec3( 0 ) && kr < 1 )
     {
-        Ray refractRay( hitData.position - 0.0001f * N, Refract( ray.direction, hitData.normal, mat.ior ) );
+        Ray refractRay( hitData.position - EPSILON * N, Refract( ray.direction, hitData.normal, mat.ior ) );
         assert( refractRay.direction != glm::vec3( 0 ) );
         refractColor += mat.Tr * ShootRay( refractRay, scene, depth + 1 );
     }
@@ -204,7 +209,7 @@ void PathTracer::Render( Scene* scene )
     std::cout << "\nRendered scene in " << Time::GetDuration( timeStart ) / 1000 << " seconds" << std::endl;
     
 #if USING( TONEMAP_AND_GAMMA )
-    renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )
+    renderedImage.ForAllPixels( [&]( const glm::vec3& pixel )
         {
             glm::vec3 tonemapped = Uncharted2Tonemap( pixel, cam.exposure );
             //return GammaCorrect( tonemapped, cam.gamma );

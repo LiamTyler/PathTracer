@@ -283,6 +283,7 @@ static void ParseTexture( rapidjson::Value& value, Scene* scene )
 bool Scene::Load( const std::string& filename )
 {
     auto startTime = Time::GetTimePoint();
+    std::cout << "Loading scene '" << filename << "'..." << std::endl;
 
     auto document = ParseJSONFile( filename );
     if ( document.IsNull() )
@@ -311,6 +312,12 @@ bool Scene::Load( const std::string& filename )
 
     mapping.ForEachMember( document, this );
 
+    float sceneLoadTime = Time::GetDuration( startTime ) / 1000.0f;
+    std::cout << "Building BVH..." << std::endl;
+    auto bvhTime = Time::GetTimePoint();
+    bvh.Build( shapes );
+    float bvhBuildTime = Time::GetDuration( bvhTime ) / 1000.0f;
+
     for ( auto light : lights )
     {
         if ( dynamic_cast< AreaLight* >( light ) )
@@ -333,9 +340,10 @@ bool Scene::Load( const std::string& filename )
         else if ( dynamic_cast< PointLight* >( light ) ) numPointLights += 1;
         else if ( dynamic_cast< DirectionalLight* >( light ) ) numDirectionalLights += 1;
     }
-    std::cout << "\nScene '" << filename << "' stats:" << std::endl;
+    std::cout << "Scene stats:" << std::endl;
     std::cout << "------------------------------------------------------" << std::endl;
-    std::cout << "Load time: " << Time::GetDuration( startTime ) << " ms" << std::endl;
+    std::cout << "Load time: " << sceneLoadTime << " seconds" << std::endl;
+    std::cout << "BVH build time: " << bvhBuildTime << " seconds" << std::endl;
     std::cout << "Number of shapes: " << shapes.size() << std::endl;
     std::cout << "\tSpheres: " << numSpheres << std::endl;
     std::cout << "\tTriangles: " << numTris << std::endl;
@@ -343,9 +351,6 @@ bool Scene::Load( const std::string& filename )
     std::cout << "\tAreaLight: " << numAreaLights << std::endl;
     std::cout << "\tPointLight: " << numPointLights << std::endl;
     std::cout << "\tDirectionalLights: " << numDirectionalLights << std::endl;
-    auto bvhTime = Time::GetTimePoint();
-    bvh.Build( shapes );
-    std::cout << "BVH built in: " << Time::GetDuration( bvhTime ) / 1000.0f << " seconds" << std::endl;
 
     return true;
 }

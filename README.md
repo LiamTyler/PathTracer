@@ -1,7 +1,18 @@
 # PathTracer
 
 ## Description
-Creating a small path tracer piece by piece with the UMN Applied Motion Lab.
+Creating a small path tracer (currently just a ray tracer).
+
+## Features
+- Spatial data structure: BVH using axis aligned bounding boxes. Defaults to using the surface area heuristic during construction.
+- Blinn-phong illumination with reflection and refraction
+- Supported shapes: triangle, sphere
+- Supported lights: point, directional, area (defaults to 16 samples per area light for soft shadows)
+- 3D model loading via Assimp
+- Environment maps
+- Configurable multisample anti-aliasing patterns
+- Tonemapping and gamma correction
+- Diffuse textures (no texture filtering/anti-aliasing yet)
 
 ## Configuring
 Tested on GCC9 and MSVC 2019
@@ -33,9 +44,12 @@ Just open build/PathTracer.sln and build there
 
 ## Running
 ```
-./bin/pathTracer[_debug] <path to scene file> (ex: ../resources/scenes/simple.json)
+./bin/pathTracer[_debug] <path to scene file> (ex: ../resources/scenes/cornell.json)
 ```
 
 ## Example Output:
-resources/scenes/simple.json rendered in 0.40 seconds @ 1000x1000 with 4x anti-aliasing on my Intel i7 8700k CPU
-![Alt text](docs_and_images/exampleOutput.png)
+resources/scenes/cornell.json
+![Alt text](docs_and_images/cornell.png)
+
+resources/scenes/dragon.json
+![Alt text](docs_and_images/dragon.png)

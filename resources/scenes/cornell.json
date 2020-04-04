@@ -7,23 +7,14 @@
         "aspectRatio": 1,
         "exposure": 1.0,
         "gamma": 1.0,
-        "_antialiasing": "REGULAR_4X4_GRID",
-        "antialiasing": "ROTATED_2X2_GRID"
+        "antialiasing": "REGULAR_4X4_GRID"
     },
     "BVH": { "splitMethod": "SAH" },
-    "SamplesPerAreaLight": 16,
+    "SamplesPerAreaLight": 256,
     
     "AmbientLight": { "color": [ 0.0, 0.0, 0.0 ] },
     "BackgroundColor": { "color": [ 0, 0, 0 ] },
-    "_PointLight": { "color": [ 1, 1, 1 ], "position": [ -0.7, -0.8, 0.7 ] },
-    
-    "Material": { "name": "white", "albedo": [ 1, 1, 1 ] },
-    "Material": { "name": "red", "albedo": [ 1, 0, 0 ] },
-    "Material": { "name": "blue", "albedo": [ 0, 0, 1 ] },
     
     "Model": { "name": "cornell-box", "filename": "cornell-box/CornellBox-Original.obj" },
-    "ModelInstance": {
-        "model": "cornell-box",
-        "transform": { "position": [ 0, -1, 0 ] }
-    }
+    "ModelInstance": { "model": "cornell-box", "transform": { "position": [ 0, -1, 0 ] } }
 }
