@@ -1,31 +1,23 @@
 #include "utils/random.hpp"
-#include <stdlib.h>
-#include <time.h>
+#include <random>
 
 namespace PT
 {
 namespace Random
 {
 
-void SetSeed( size_t seed )
+float Rand()
 {
-    srand( static_cast< unsigned >( seed ) );
-}
-
-int RandInt( int l, int h )
-{
-    return l + rand() % (h - l + 1);
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937 generator( rd() );
+    std::uniform_real_distribution< float > distribution( 0, 1 );
+    return distribution( generator );
+    //return rand() / (float) RAND_MAX;
 }
 
 float RandFloat( float l, float h )
 {
-    float r = rand() / static_cast< float >( RAND_MAX );
-    return r * (h - l) + l;
-}
-
-float Rand()
-{
-    return rand() / static_cast< float >( RAND_MAX );
+    return Rand() * (h - l) + l;
 }
 
 } // namespace Random

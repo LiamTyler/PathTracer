@@ -1,5 +1,6 @@
 #include "shapes.hpp"
 #include "intersection_tests.hpp"
+#include "utils/random.hpp"
 #include "resource/model.hpp"
 
 namespace PT
@@ -8,6 +9,14 @@ namespace PT
 Material* Sphere::GetMaterial() const
 {
     return material.get();
+}
+
+SurfaceInfo Sphere::Sample() const
+{
+    SurfaceInfo info;
+    info.position = position + radius * glm::normalize( glm::vec3( Random::Rand(), Random::Rand(), Random::Rand() ) );
+    info.normal   = glm::normalize( info.position - position );
+    return info;
 }
 
 bool Sphere::Intersect( const Ray& ray, IntersectionData* hitData ) const
@@ -45,21 +54,33 @@ AABB Sphere::WorldSpaceAABB() const
 
 Material* Triangle::GetMaterial() const
 {
-    return model->materials[materialIndex].get();
+    return mesh->data.material.get();
+}
+
+SurfaceInfo Triangle::Sample() const
+{
+    SurfaceInfo info;
+    float u = Random::Rand();
+    float v = Random::Rand();
+    const auto& obj = mesh->data;
+    info.position   = ( 1 - u - v ) * obj.vertices[i0]  + u * obj.vertices[i1] + v * obj.vertices[i2];
+    info.normal     = glm::normalize( ( 1 - u - v ) * obj.normals[i0] + u * obj.normals[i1] + v * obj.normals[i2] );
+    return info;
 }
 
 bool Triangle::Intersect( const Ray& ray, IntersectionData* hitData ) const
 {
     float t, u, v;
-    if ( intersect::RayTriangle( ray.position, ray.direction, model->vertices[i0], model->vertices[i1], model->vertices[i2], t, u, v, hitData->t ) )
+    const auto& obj = mesh->data;
+    if ( intersect::RayTriangle( ray.position, ray.direction, obj.vertices[i0], obj.vertices[i1], obj.vertices[i2], t, u, v, hitData->t ) )
     {
         hitData->t         = t;
-        hitData->material  = model->materials[materialIndex].get();
+        hitData->material  = obj.material.get();
         hitData->position  = ray.Evaluate( t );
-        hitData->normal    = glm::normalize( ( 1 - u - v ) * model->normals[i0] + u * model->normals[i1] + v * model->normals[i2] );
-        hitData->tangent   = glm::normalize( ( 1 - u - v ) * model->tangents[i0] + u * model->tangents[i1] + v * model->tangents[i2] );
+        hitData->normal    = glm::normalize( ( 1 - u - v ) * obj.normals[i0]  + u * obj.normals[i1]  + v * obj.normals[i2] );
+        hitData->tangent   = glm::normalize( ( 1 - u - v ) * obj.tangents[i0] + u * obj.tangents[i1] + v * obj.tangents[i2] );
         hitData->bitangent = glm::cross( hitData->normal, hitData->tangent );
-        hitData->texCoords = ( 1 - u - v ) * model->uvs[i0] + u * model->uvs[i1] + v * model->uvs[i2];
+        hitData->texCoords = ( 1 - u - v ) * obj.uvs[i0] + u * obj.uvs[i1] + v * obj.uvs[i2];
         return true;
     }
     return false;
@@ -68,9 +89,9 @@ bool Triangle::Intersect( const Ray& ray, IntersectionData* hitData ) const
 AABB Triangle::WorldSpaceAABB() const
 {
     AABB aabb;
-    aabb.Union( model->vertices[i0] );
-    aabb.Union( model->vertices[i1] );
-    aabb.Union( model->vertices[i2] );
+    aabb.Union( mesh->data.vertices[i0] );
+    aabb.Union( mesh->data.vertices[i1] );
+    aabb.Union( mesh->data.vertices[i2] );
     return aabb;
 }
 

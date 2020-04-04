@@ -80,144 +80,54 @@ namespace PT
 
     static bool ParseMaterials( const std::string& filename, Model* model, const aiScene* scene )
     {
-        model->materials.resize( scene->mNumMaterials );
+        std::vector< std::shared_ptr< Material > > materials( scene->mNumMaterials );
         for ( uint32_t mtlIdx = 0; mtlIdx < scene->mNumMaterials; ++mtlIdx )
         {
             const aiMaterial* pMaterial = scene->mMaterials[mtlIdx];
-            model->materials[mtlIdx] = std::make_shared< Material >();
+            auto newMat = std::make_shared< Material >();
+            materials[mtlIdx] = newMat;
+
             aiString name;
             aiColor3D color;
             pMaterial->Get( AI_MATKEY_NAME, name );
-            model->materials[mtlIdx]->name = name.C_Str();
+            newMat->name = name.C_Str();
 
             color = aiColor3D( 0.f, 0.f, 0.f );
             pMaterial->Get( AI_MATKEY_COLOR_DIFFUSE, color );
-            model->materials[mtlIdx]->albedo = { color.r, color.g, color.b };
+            newMat->albedo = { color.r, color.g, color.b };
+
+            color = aiColor3D( 0.f, 0.f, 0.f );
+            pMaterial->Get( AI_MATKEY_COLOR_SPECULAR, color );
+            newMat->Ks = { color.r, color.g, color.b };
+            
+            float tmp;
+            pMaterial->Get( AI_MATKEY_SHININESS, tmp );
+            newMat->Ns = tmp;
+
+            color = aiColor3D( 0.f, 0.f, 0.f );
+            pMaterial->Get( AI_MATKEY_COLOR_EMISSIVE, color );
+            newMat->Ke = { color.r, color.g, color.b };
 
             if ( pMaterial->GetTextureCount( aiTextureType_DIFFUSE ) > 0 )
             {
                 assert( pMaterial->GetTextureCount( aiTextureType_DIFFUSE ) == 1 );
-                model->materials[mtlIdx]->albedoTexture = LoadAssimpTexture( pMaterial, aiTextureType_DIFFUSE );
-                if ( !model->materials[mtlIdx]->albedoTexture )
+                newMat->albedoTexture = LoadAssimpTexture( pMaterial, aiTextureType_DIFFUSE );
+                if ( !newMat->albedoTexture )
                 {
                     return false;
                 }
             }
         }
 
-        return true;
-    }
-
-    bool Model::Load( const ModelCreateInfo& createInfo )
-    {
-        name = createInfo.name;
-        Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile( createInfo.filename.c_str(),
-            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials );
-        if ( !scene )
+        for ( size_t i = 0 ; i < model->meshes.size(); i++ )
         {
-            std::cout << "Error parsing model file '" << createInfo.filename.c_str() << "': " << importer.GetErrorString() << std::endl;
-            return false;
+            model->meshes[i].material = materials[scene->mMeshes[i]->mMaterialIndex];
         }
-
-        meshes.resize( scene->mNumMeshes );       
-        uint32_t numVertices = 0;
-        uint32_t numIndices = 0;    
-        for ( size_t i = 0 ; i < meshes.size(); i++ )
-        {
-            meshes[i].name          = scene->mMeshes[i]->mName.C_Str();
-            meshes[i].materialIndex = scene->mMeshes[i]->mMaterialIndex;
-            meshes[i].numIndices    = scene->mMeshes[i]->mNumFaces * 3;
-            meshes[i].numVertices   = scene->mMeshes[i]->mNumVertices;
-            meshes[i].startIndex    = numIndices;
-        
-            numVertices += scene->mMeshes[i]->mNumVertices;
-            numIndices  += meshes[i].numIndices;
-        }
-        vertices.reserve( numVertices );
-        normals.reserve( numVertices );
-        uvs.reserve( numVertices );
-        tangents.reserve( numVertices );
-        indices.reserve( numIndices );
-        triangleMaterialIndices.reserve( numIndices / 3 );
-
-        uint32_t indexOffset = 0; 
-        for ( size_t meshIdx = 0; meshIdx < meshes.size(); ++meshIdx )
-        {
-            const aiMesh* paiMesh = scene->mMeshes[meshIdx];
-            const aiVector3D Zero3D( 0.0f, 0.0f, 0.0f );
-
-            for ( uint32_t vIdx = 0; vIdx < paiMesh->mNumVertices ; ++vIdx )
-            {
-                const aiVector3D* pPos    = &paiMesh->mVertices[vIdx];
-                const aiVector3D* pNormal = &paiMesh->mNormals[vIdx];
-                glm::vec3 pos( pPos->x, pPos->y, pPos->z );
-                vertices.emplace_back( pos );
-                normals.emplace_back( pNormal->x, pNormal->y, pNormal->z );
-
-                if ( paiMesh->HasTextureCoords( 0 ) )
-                {
-                    const aiVector3D* pTexCoord = &paiMesh->mTextureCoords[0][vIdx];
-                    uvs.emplace_back( pTexCoord->x, pTexCoord->y );
-                }
-                else
-                {
-                    uvs.emplace_back( 0, 0 );
-                }
-                if ( paiMesh->HasTangentsAndBitangents() )
-                {
-                    const aiVector3D* pTangent = &paiMesh->mTangents[vIdx];
-                    glm::vec3 t( pTangent->x, pTangent->y, pTangent->z );
-                    const glm::vec3& n = normals[vIdx];
-                    t = glm::normalize( t - n * glm::dot( n, t ) ); // does assimp orthogonalize the tangents automatically?
-                    tangents.emplace_back( t );
-                }
-            }
-
-            for ( size_t iIdx = 0; iIdx < paiMesh->mNumFaces; ++iIdx )
-            {
-                const aiFace& face = paiMesh->mFaces[iIdx];
-                indices.push_back( face.mIndices[0] + indexOffset );
-                indices.push_back( face.mIndices[1] + indexOffset );
-                indices.push_back( face.mIndices[2] + indexOffset );
-                triangleMaterialIndices.push_back( meshes[meshIdx].materialIndex );
-            }
-            indexOffset = static_cast< uint32_t >( vertices.size() );
-        }
-
-        if ( tangents.size() == 0 )
-        {
-            std::cout << "WARNING: model '" << name << "' had no uvs, so assimp could not generate tangents. Generating arbitrary tangents." << std::endl;
-            tangents.resize( vertices.size(), glm::vec3( 0 ) );
-            for ( size_t i = 0; i < indices.size(); i += 3 )
-            {
-                uint32_t i0  = indices[i + 0];
-                uint32_t i1  = indices[i + 1];
-                glm::vec3 v0 = vertices[i0];
-                glm::vec3 v1 = vertices[i1];
-                glm::vec3 t  = glm::normalize( v1 - v0 );
-                if ( tangents[i0] == glm::vec3( 0 ) )
-                {
-                    tangents[i0] = t;
-                }
-                if ( tangents[i1] == glm::vec3( 0 ) )
-                {
-                    tangents[i1] = t;
-                }
-            }
-        }
-
-        if ( !ParseMaterials( createInfo.filename, this, scene ) )
-        {
-            std::cout << "Could not load the model's materials" << std::endl;
-            return false;
-        }
-        RecalculateNormals();
 
         return true;
     }
 
-    void Model::RecalculateNormals()
+    void Mesh::RecalculateNormals()
     {
         normals.resize( vertices.size(), glm::vec3( 0 ) );
 
@@ -238,46 +148,155 @@ namespace PT
         }
     }
 
-    ModelInstance::ModelInstance( const Model& model, const Transform& _localToWorld, std::shared_ptr< Material > newMaterial ) :
-        localToWorld( _localToWorld ),
-        worldToLocal( _localToWorld.Inverse() )
+    bool Model::Load( const ModelCreateInfo& createInfo )
     {
-        size_t numVertices = model.vertices.size();
-        assert( model.normals.size() == numVertices && model.tangents.size() == numVertices );
-        vertices.resize( numVertices );
-        for ( size_t i = 0; i < numVertices; ++i )
-            vertices[i] = localToWorld.TransformPoint( model.vertices[i] );
-        normals.resize( numVertices );
-        for ( size_t i = 0; i < numVertices; ++i )
-            normals[i] = glm::normalize( worldToLocal.Transpose().TransformVector( model.normals[i] ) );
-        tangents.resize( numVertices );
-        for ( size_t i = 0; i < numVertices; ++i )
-            tangents[i] = localToWorld.TransformVector( model.tangents[i] );
-        uvs = model.uvs;
-        indices = model.indices;
-        triangleMaterialIndices = model.triangleMaterialIndices;
-        materials = model.materials;
-        if ( newMaterial )
+        name = createInfo.name;
+        Assimp::Importer importer;
+        const aiScene* scene = importer.ReadFile( createInfo.filename.c_str(),
+            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials );
+        if ( !scene )
         {
-            for ( auto& mat : materials )
+            std::cout << "Error parsing model file '" << createInfo.filename.c_str() << "': " << importer.GetErrorString() << std::endl;
+            return false;
+        }
+
+        meshes.resize( scene->mNumMeshes );
+        for ( size_t meshIdx = 0; meshIdx < meshes.size(); ++meshIdx )
+        {
+            const aiMesh* paiMesh = scene->mMeshes[meshIdx];
+            const aiVector3D Zero3D( 0.0f, 0.0f, 0.0f );
+            Mesh& mesh = meshes[meshIdx];
+            mesh.name  = paiMesh->mName.C_Str();
+            mesh.vertices.reserve( paiMesh->mNumVertices );
+            mesh.normals.reserve( paiMesh->mNumVertices );
+            mesh.uvs.reserve( paiMesh->mNumVertices );
+            mesh.tangents.reserve( paiMesh->mNumVertices );
+            mesh.indices.reserve( paiMesh->mNumFaces * 3 );
+
+            for ( uint32_t vIdx = 0; vIdx < paiMesh->mNumVertices ; ++vIdx )
             {
-                mat = newMaterial;
+                const aiVector3D* pPos    = &paiMesh->mVertices[vIdx];
+                const aiVector3D* pNormal = &paiMesh->mNormals[vIdx];
+                glm::vec3 pos( pPos->x, pPos->y, pPos->z );
+                mesh.vertices.emplace_back( pos );
+                mesh.normals.emplace_back( pNormal->x, pNormal->y, pNormal->z );
+
+                if ( paiMesh->HasTextureCoords( 0 ) )
+                {
+                    const aiVector3D* pTexCoord = &paiMesh->mTextureCoords[0][vIdx];
+                    mesh.uvs.emplace_back( pTexCoord->x, pTexCoord->y );
+                }
+                else
+                {
+                    mesh.uvs.emplace_back( 0, 0 );
+                }
+                if ( paiMesh->HasTangentsAndBitangents() )
+                {
+                    const aiVector3D* pTangent = &paiMesh->mTangents[vIdx];
+                    glm::vec3 t( pTangent->x, pTangent->y, pTangent->z );
+                    const glm::vec3& n = mesh.normals[vIdx];
+                    t = glm::normalize( t - n * glm::dot( n, t ) ); // does assimp orthogonalize the tangents automatically?
+                    mesh.tangents.emplace_back( t );
+                }
             }
+
+            for ( size_t iIdx = 0; iIdx < paiMesh->mNumFaces; ++iIdx )
+            {
+                const aiFace& face = paiMesh->mFaces[iIdx];
+                mesh.indices.push_back( face.mIndices[0] );
+                mesh.indices.push_back( face.mIndices[1] );
+                mesh.indices.push_back( face.mIndices[2] );
+            }
+
+            mesh.RecalculateNormals();
+            if ( mesh.tangents.size() == 0 )
+            {
+                // std::cout << "WARNING: model '" << name << "', mesh '" << mesh.name << "' had no uvs, so assimp could not generate tangents. Generating arbitrary tangent basis." << std::endl;
+                mesh.tangents.resize( mesh.vertices.size(), glm::vec3( 0 ) );
+                for ( size_t i = 0; i < mesh.indices.size(); i += 3 )
+                {
+                    uint32_t i0  = mesh.indices[i + 0];
+                    uint32_t i1  = mesh.indices[i + 1];
+                    glm::vec3 v0 = mesh.vertices[i0];
+                    glm::vec3 v1 = mesh.vertices[i1];
+                    glm::vec3 n0 = mesh.normals[i0];
+                    glm::vec3 n1 = mesh.normals[i1];
+                    glm::vec3 t  = glm::normalize( v1 - v0 );
+                    glm::vec3 t0 = glm::normalize( t - n0 * glm::dot( n0, t ) );
+                    glm::vec3 t1 = glm::normalize( t - n1 * glm::dot( n1, t ) );
+                    if ( mesh.tangents[i0] == glm::vec3( 0 ) )
+                    {
+                        mesh.tangents[i0] = t0;
+                    }
+                    if ( mesh.tangents[i1] == glm::vec3( 0 ) )
+                    {
+                        mesh.tangents[i1] = t1;
+                    }
+                }
+            }
+        }
+
+        if ( !ParseMaterials( createInfo.filename, this, scene ) )
+        {
+            std::cout << "Could not load the model's materials" << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    void Model::RecalculateNormals()
+    {
+        for ( auto& mesh : meshes )
+        {
+            mesh.RecalculateNormals();
         }
     }
 
-    void ModelInstance::EmitTriangles( std::vector< std::shared_ptr< Shape > >& shapes, std::shared_ptr< ModelInstance > modelPtr ) const
+    MeshInstance::MeshInstance( const Mesh& localMesh, const Transform& _localToWorld, std::shared_ptr< Material > newMaterial ) :
+        localToWorld( _localToWorld ),
+        worldToLocal( _localToWorld.Inverse() )
     {
-        shapes.reserve( shapes.size() + indices.size() / 3 );
-        for ( size_t face = 0; face < indices.size() / 3; ++face )
+        size_t numVertices = localMesh.vertices.size();
+        assert( localMesh.normals.size() == numVertices && localMesh.tangents.size() == numVertices );
+        data.vertices.resize( numVertices );
+        for ( size_t i = 0; i < numVertices; ++i )
+            data.vertices[i] = localToWorld.TransformPoint( localMesh.vertices[i] );
+        data.normals.resize( numVertices );
+        for ( size_t i = 0; i < numVertices; ++i )
+            data.normals[i] = glm::normalize( worldToLocal.Transpose().TransformVector( localMesh.normals[i] ) );
+        data.tangents.resize( numVertices );
+        for ( size_t i = 0; i < numVertices; ++i )
+            data.tangents[i] = localToWorld.TransformVector( localMesh.tangents[i] );
+        data.uvs      = localMesh.uvs;
+        data.indices  = localMesh.indices;
+        data.material = newMaterial ? newMaterial : localMesh.material;
+    }
+
+    void MeshInstance::EmitTrianglesAndLights( std::vector< std::shared_ptr< Shape > >& shapes,
+        std::vector< Light* >& lights, std::shared_ptr< MeshInstance > meshPtr ) const
+    {
+        shapes.reserve( shapes.size() + data.indices.size() / 3 );
+        if ( data.material->Ke != glm::vec3( 0 ) )
+        {
+            lights.reserve( lights.size() + data.indices.size() / 3 );
+        }
+
+        for ( size_t face = 0; face < data.indices.size() / 3; ++face )
         {
             auto tri           = std::make_shared< Triangle >();
-            tri->model         = modelPtr;
-            tri->materialIndex = triangleMaterialIndices[face];
-            tri->i0            = indices[3*face + 0];
-            tri->i1            = indices[3*face + 1];
-            tri->i2            = indices[3*face + 2];
+            tri->mesh          = meshPtr;
+            tri->i0            = data.indices[3*face + 0];
+            tri->i1            = data.indices[3*face + 1];
+            tri->i2            = data.indices[3*face + 2];
             shapes.push_back( tri );
+            if ( data.material->Ke != glm::vec3( 0 ) )
+            {
+                auto areaLight   = new AreaLight;
+                areaLight->color = data.material->Ke;
+                areaLight->shape = tri;
+                lights.push_back( areaLight );
+            }
         }
     }
 

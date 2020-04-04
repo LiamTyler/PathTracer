@@ -181,8 +181,11 @@ static void ParseModelInstance( rapidjson::Value& value, Scene* scene )
         material = ResourceManager::GetMaterial( info.materialName );
         assert( material );
     }
-    auto modelInstance = std::make_shared< ModelInstance >( *model, info.transform, material );
-    modelInstance->EmitTriangles( scene->shapes, modelInstance );
+    for ( auto& mesh : model->meshes )
+    {
+        auto meshInstance = std::make_shared< MeshInstance >( mesh, info.transform, material );
+        meshInstance->EmitTrianglesAndLights( scene->shapes, scene->lights, meshInstance );
+    }
 }
 
 static void ParseOutputImageData( rapidjson::Value& value, Scene* scene )

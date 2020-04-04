@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <atomic>
 
-#define TONEMAP_AND_GAMMA NOT_IN_USE
+#define TONEMAP_AND_GAMMA IN_USE
 #define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 #define PROGRESS_BAR_WIDTH 60
 
@@ -55,7 +55,7 @@ glm::vec3 Refract(const glm::vec3& I, const glm::vec3& N, const float &ior )
     else
     {
         std::swap( etai, etat );
-        n= -N;
+        n = -N;
     } 
     float eta = etai / etat; 
     float k   = 1 - eta * eta * (1 - cosi * cosi); 
@@ -64,31 +64,41 @@ glm::vec3 Refract(const glm::vec3& I, const glm::vec3& N, const float &ior )
 
 glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitData, int depth )
 {
-    auto N           = hitData.normal;
-    const auto V     = -ray.direction;
-    const auto& mat  = *hitData.material;
-    glm::vec3 albedo = mat.GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
+    auto N             = hitData.normal;
+    const auto V       = -ray.direction;
+    const auto& mat    = *hitData.material;
+    glm::vec3 fixedPos = hitData.position + 0.0001f * N;
+    glm::vec3 albedo   = mat.GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
 
     // ambient
-    glm::vec3 color = albedo * scene->ambientLight;
+    glm::vec3 color = glm::vec3( 0 );
+    color += mat.Ke;
+    color += albedo * scene->ambientLight;
 
     for ( const auto& light : scene->lights )
     {
-        LightIlluminationInfo info = light->GetLightIlluminationInfo( hitData.position );
-        const auto& L = info.dirToLight;
-        
-        IntersectionData shadowHit;
-        Ray shadowRay( hitData.position + 0.0001f * N, L );
-        if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t < info.distanceToLight )
+        glm::vec3 sampledColor( 0 );
+        int samplesPerLight = 128;
+        for ( int i = 0; i < samplesPerLight; ++i )
         {
-            continue;
-        }
+            LightIlluminationInfo info;
+            info = light->GetLightIlluminationInfo( fixedPos );
+            const auto& L = info.dirToLight;
+        
+            IntersectionData shadowHit;
+            Ray shadowRay( fixedPos, L );
+            if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t + 0.0001f < info.distanceToLight )
+            {
+                continue;
+            }
 
-        const auto I = info.attenuation * light->color;
-        // diffuse
-        color += I * albedo * std::max( glm::dot( N, L ), 0.0f );
-        // specular
-        color += I * mat.Ks * std::pow( std::max( 0.0f, glm::dot( V, glm::reflect( -L, N ) ) ), mat.Ns );
+            const auto I = info.attenuation * light->color;
+            // diffuse
+            sampledColor += I * albedo * std::max( glm::dot( N, L ), 0.0f );
+            // specular
+            sampledColor += I * mat.Ks * std::pow( std::max( 0.0f, glm::dot( V, glm::reflect( -L, N ) ) ), mat.Ns );
+        }
+        color += sampledColor / (float)samplesPerLight;
     }
 
     // reflection & refraction
@@ -136,9 +146,20 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
     return pixelColor;
 }
 
+glm::vec3 Uncharted2Tonemap( const glm::vec3& x)
+{
+    float A = 0.15f;
+    float B = 0.50f;
+    float C = 0.10f;
+    float D = 0.20f;
+    float E = 0.02f;
+    float F = 0.30f;
+    float W = 11.2f;
+    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+
 void PathTracer::Render( Scene* scene )
 {
-    Random::SetSeed( time( NULL ) );
     renderedImage = Image( scene->imageResolution.x, scene->imageResolution.y );
     std::cout << "\nRendering scene..." << std::endl;
 
@@ -198,9 +219,17 @@ void PathTracer::Render( Scene* scene )
     renderedImage.ForAllPixels( [&cam]( const glm::vec3& pixel )
         {
             glm::vec3 hdrColor       = cam.exposure * pixel;
-            glm::vec3 tonemapped     = hdrColor / ( glm::vec3( 1 ) + hdrColor );
-            glm::vec3 gammaCorrected = glm::pow( tonemapped, glm::vec3( 1.0f / cam.gamma ) );
-            return gammaCorrected;
+            // glm::vec3 tonemapped     = hdrColor / ( glm::vec3( 1 ) + hdrColor );
+            // glm::vec3 gammaCorrected = glm::pow( tonemapped, glm::vec3( 1.0f / cam.gamma ) );
+            // return gammaCorrected;
+
+            glm::vec3 curr = Uncharted2Tonemap( hdrColor );
+
+            glm::vec3 whiteScale = 1.0f/Uncharted2Tonemap( glm::vec3( 11.2f ) );
+            glm::vec3 color = curr*whiteScale;
+      
+            //return retColor = glm::pow(color,glm::vec3( 1.f/2.2f ) );
+            return color;
         }
     );
 #endif // #if USING( TONEMAP_AND_GAMMA )
