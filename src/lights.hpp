@@ -18,6 +18,7 @@ struct Light
     virtual ~Light() = default;
 
     glm::vec3 color = glm::vec3( 1, 1, 1 );
+    int nSamples    = 1;
 
     virtual LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const = 0;
 };

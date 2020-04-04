@@ -1,8 +1,5 @@
 {
-    "OutputImageData": {
-        "resolution": [ 1000, 1000 ],
-        "filename": "cornell.png"
-    },
+    "OutputImageData": { "resolution": [ 1000, 1000 ], "filename": "cornell.png" },
     "Camera": {
         "position": [ 0, 0, 3.3 ],
         "rotation": [ 0, 0, 0 ],
@@ -11,14 +8,14 @@
         "exposure": 1.0,
         "gamma": 1.0,
         "_antialiasing": "REGULAR_4X4_GRID",
-        "antialiasing": "NONE",
-        "_antialiasing": "ROTATED_2X2_GRID"
+        "antialiasing": "ROTATED_2X2_GRID"
     },
     "BVH": { "splitMethod": "SAH" },
+    "SamplesPerAreaLight": 16,
     
     "AmbientLight": { "color": [ 0.0, 0.0, 0.0 ] },
     "BackgroundColor": { "color": [ 0, 0, 0 ] },
-    "_PointLight": { "color": [ 1, 1, 1 ], "position": [ 0, 0.8, 0 ] },
+    "_PointLight": { "color": [ 1, 1, 1 ], "position": [ -0.7, -0.8, 0.7 ] },
     
     "Material": { "name": "white", "albedo": [ 1, 1, 1 ] },
     "Material": { "name": "red", "albedo": [ 1, 0, 0 ] },

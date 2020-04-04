@@ -216,20 +216,9 @@ static void ParsePointLight( rapidjson::Value& value, Scene* scene )
     mapping.ForEachMember( value, (PointLight*)scene->lights[scene->lights.size() - 1] );
 }
 
-static void ParseSphere( rapidjson::Value& value, Scene* scene )
+static void ParseSamplesPerAreaLight( rapidjson::Value& value, Scene* scene )
 {
-    static FunctionMapper< void, Sphere& > mapping(
-    {
-        { "position", []( rapidjson::Value& v, Sphere& s ) { s.position = ParseVec3( v ); } },
-        { "rotation", []( rapidjson::Value& v, Sphere& s ) { s.rotation = glm::radians( ParseVec3( v ) ); } },
-        { "radius",   []( rapidjson::Value& v, Sphere& s ) { s.radius   = ParseNumber< float >( v ); } },
-        { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
-    });
-
-    auto o = std::make_shared< Sphere >();
-    scene->shapes.push_back( o );
-    mapping.ForEachMember( value, *o );
-    o->worldToLocal = Transform( o->position, o->rotation, glm::vec3( o->radius ) ).Inverse();
+    scene->numSamplesPerAreaLight = value.GetInt();
 }
 
 static void ParseSkybox( rapidjson::Value& value, Scene* scene )
@@ -255,6 +244,22 @@ static void ParseSkybox( rapidjson::Value& value, Scene* scene )
         ResourceManager::AddSkybox( res );
         scene->skybox = res;
     }
+}
+
+static void ParseSphere( rapidjson::Value& value, Scene* scene )
+{
+    static FunctionMapper< void, Sphere& > mapping(
+    {
+        { "position", []( rapidjson::Value& v, Sphere& s ) { s.position = ParseVec3( v ); } },
+        { "rotation", []( rapidjson::Value& v, Sphere& s ) { s.rotation = glm::radians( ParseVec3( v ) ); } },
+        { "radius",   []( rapidjson::Value& v, Sphere& s ) { s.radius   = ParseNumber< float >( v ); } },
+        { "material", []( rapidjson::Value& v, Sphere& s ) { s.material = ResourceManager::GetMaterial( v.GetString() ); } },
+    });
+
+    auto o = std::make_shared< Sphere >();
+    scene->shapes.push_back( o );
+    mapping.ForEachMember( value, *o );
+    o->worldToLocal = Transform( o->position, o->rotation, glm::vec3( o->radius ) ).Inverse();
 }
 
 static void ParseTexture( rapidjson::Value& value, Scene* scene )
@@ -287,46 +292,57 @@ bool Scene::Load( const std::string& filename )
 
     static FunctionMapper< void, Scene* > mapping(
     {
-        { "AmbientLight",     ParseAmbientLight },
-        { "BackgroundColor",  ParseBackgroundColor },
-        { "BVH",              ParseBVH },
-        { "Camera",           ParseCamera },
-        { "DirectionalLight", ParseDirectionalLight },
-        { "Material",         ParseMaterial },
-        { "MaxDepth",         ParseMaxDepth },
-        { "Model",            ParseModel },
-        { "ModelInstance",    ParseModelInstance },
-        { "OutputImageData",  ParseOutputImageData },
-        { "PointLight",       ParsePointLight },
-        { "Skybox",           ParseSkybox },
-        { "Sphere",           ParseSphere },
-        { "Texture",          ParseTexture },
+        { "AmbientLight",        ParseAmbientLight },
+        { "BackgroundColor",     ParseBackgroundColor },
+        { "BVH",                 ParseBVH },
+        { "Camera",              ParseCamera },
+        { "DirectionalLight",    ParseDirectionalLight },
+        { "Material",            ParseMaterial },
+        { "MaxDepth",            ParseMaxDepth },
+        { "Model",               ParseModel },
+        { "ModelInstance",       ParseModelInstance },
+        { "OutputImageData",     ParseOutputImageData },
+        { "PointLight",          ParsePointLight },
+        { "SamplesPerAreaLight", ParseSamplesPerAreaLight },
+        { "Skybox",              ParseSkybox },
+        { "Sphere",              ParseSphere },
+        { "Texture",             ParseTexture },
     });
 
     mapping.ForEachMember( document, this );
 
+    for ( auto light : lights )
+    {
+        if ( dynamic_cast< AreaLight* >( light ) )
+        {
+            light->nSamples = numSamplesPerAreaLight;
+        }
+    }
+
     // compute some scene statistics
-    size_t numSpheres        = 0;
-    size_t numModelInstances = 0;
-    size_t totalTriangles    = 0;
+    size_t numSpheres = 0, numTris = 0;
+    size_t numPointLights = 0, numDirectionalLights = 0, numAreaLights = 0;
     for ( const auto& shape : shapes )
     {
-        if ( std::dynamic_pointer_cast< Sphere >( shape ) )
-        {
-            numSpheres += 1;
-        }
-        if ( std::dynamic_pointer_cast< Triangle >( shape ) )
-        {
-            totalTriangles += 1;
-        }
+        if ( std::dynamic_pointer_cast< Sphere >( shape ) ) numSpheres += 1;
+        else if ( std::dynamic_pointer_cast< Triangle >( shape ) ) numTris += 1;
+    }
+    for ( auto light : lights )
+    {
+        if ( dynamic_cast< AreaLight* >( light ) ) numAreaLights += 1;
+        else if ( dynamic_cast< PointLight* >( light ) ) numPointLights += 1;
+        else if ( dynamic_cast< DirectionalLight* >( light ) ) numDirectionalLights += 1;
     }
     std::cout << "\nScene '" << filename << "' stats:" << std::endl;
     std::cout << "------------------------------------------------------" << std::endl;
     std::cout << "Load time: " << Time::GetDuration( startTime ) << " ms" << std::endl;
     std::cout << "Number of shapes: " << shapes.size() << std::endl;
     std::cout << "\tSpheres: " << numSpheres << std::endl;
-    std::cout << "\tModelInstances: " << numModelInstances << std::endl;
-    std::cout << "Total number of triangles: " << totalTriangles << std::endl;
+    std::cout << "\tTriangles: " << numTris << std::endl;
+    std::cout << "Number of lights: " << lights.size() << std::endl;
+    std::cout << "\tAreaLight: " << numAreaLights << std::endl;
+    std::cout << "\tPointLight: " << numPointLights << std::endl;
+    std::cout << "\tDirectionalLights: " << numDirectionalLights << std::endl;
     auto bvhTime = Time::GetTimePoint();
     bvh.Build( shapes );
     std::cout << "BVH built in: " << Time::GetDuration( bvhTime ) / 1000.0f << " seconds" << std::endl;

@@ -32,6 +32,7 @@ public:
     std::string outputImageFilename = "rendered.png";
     glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );
     int maxDepth                    = 5;
+    int numSamplesPerAreaLight      = 16;
     BVH bvh;
 };
 

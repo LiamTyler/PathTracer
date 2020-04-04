@@ -78,8 +78,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
     for ( const auto& light : scene->lights )
     {
         glm::vec3 sampledColor( 0 );
-        int samplesPerLight = 128;
-        for ( int i = 0; i < samplesPerLight; ++i )
+        for ( int i = 0; i < light->nSamples; ++i )
         {
             LightIlluminationInfo info;
             info = light->GetLightIlluminationInfo( fixedPos );
@@ -98,7 +97,7 @@ glm::vec3 Illuminate( Scene* scene, const Ray& ray, const IntersectionData& hitD
             // specular
             sampledColor += I * mat.Ks * std::pow( std::max( 0.0f, glm::dot( V, glm::reflect( -L, N ) ) ), mat.Ns );
         }
-        color += sampledColor / (float)samplesPerLight;
+        color += sampledColor / (float)light->nSamples;
     }
 
     // reflection & refraction
