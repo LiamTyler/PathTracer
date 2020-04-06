@@ -1,0 +1,13 @@
+# Blender v2.79 (sub 0) OBJ File: ''
+# www.blender.org
+o Triangle
+v -1 -1 0
+v  1 -1 0
+v  0  1 0
+
+vn 1 0 0
+vn 0 1 0
+vn 0 0 1
+
+s off
+f 1//1 2//2 3//3

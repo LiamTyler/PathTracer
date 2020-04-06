@@ -129,6 +129,7 @@ namespace PT
 
     void Mesh::RecalculateNormals()
     {
+        normals.clear();
         normals.resize( vertices.size(), glm::vec3( 0 ) );
 
         for ( size_t i = 0; i < indices.size(); i += 3 )
