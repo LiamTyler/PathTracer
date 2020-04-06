@@ -2,6 +2,7 @@
 #include "intersection_tests.hpp"
 #include "utils/random.hpp"
 #include "resource/model.hpp"
+#include "sampling.hpp"
 
 namespace PT
 {
@@ -14,8 +15,9 @@ Material* Sphere::GetMaterial() const
 SurfaceInfo Sphere::Sample() const
 {
     SurfaceInfo info;
-    info.position = position + radius * glm::normalize( glm::vec3( Random::Rand(), Random::Rand(), Random::Rand() ) );
-    info.normal   = glm::normalize( info.position - position );
+    glm::vec3 randNormal = UniformSampleSphere( Random::Rand(), Random::Rand() );
+    info.position        = position + radius * randNormal;
+    info.normal          = randNormal;
     return info;
 }
 
@@ -60,11 +62,12 @@ Material* Triangle::GetMaterial() const
 SurfaceInfo Triangle::Sample() const
 {
     SurfaceInfo info;
-    float u = Random::Rand();
-    float v = Random::Rand();
+    glm::vec2 sample = UniformSampleTriangle( Random::Rand(), Random::Rand() );
+    float u = sample.x;
+    float v = sample.y;
     const auto& obj = mesh->data;
-    info.position   = ( 1 - u - v ) * obj.vertices[i0]  + u * obj.vertices[i1] + v * obj.vertices[i2];
-    info.normal     = glm::normalize( ( 1 - u - v ) * obj.normals[i0] + u * obj.normals[i1] + v * obj.normals[i2] );
+    info.position   = u * obj.vertices[i0] + v * obj.vertices[i1] + ( 1 - u - v ) * obj.vertices[i2];
+    info.normal     = glm::normalize( u * obj.normals[i0] + v * obj.normals[i1] + ( 1 - u - v ) * obj.normals[i2] );
     return info;
 }
 

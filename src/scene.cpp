@@ -329,7 +329,7 @@ bool Scene::Load( const std::string& filename )
     // compute some scene statistics
     size_t numSpheres = 0, numTris = 0;
     size_t numPointLights = 0, numDirectionalLights = 0, numAreaLights = 0;
-    for ( const auto& shape : shapes )
+    for ( const auto& shape : bvh.shapes )
     {
         if ( std::dynamic_pointer_cast< Sphere >( shape ) ) numSpheres += 1;
         else if ( std::dynamic_pointer_cast< Triangle >( shape ) ) numTris += 1;

@@ -63,6 +63,8 @@ set(
     src/math.hpp
     src/path_tracer.cpp
     src/path_tracer.hpp
+    src/sampling.cpp
+    src/sampling.hpp
     src/scene.cpp
     src/scene.hpp
     src/shapes.hpp
