@@ -221,6 +221,11 @@ static void ParseSamplesPerAreaLight( rapidjson::Value& value, Scene* scene )
     scene->numSamplesPerAreaLight = value.GetInt();
 }
 
+static void ParseSamplesPerPixel( rapidjson::Value& value, Scene* scene )
+{
+    scene->numSamplesPerPixel = value.GetInt();
+}
+
 static void ParseSkybox( rapidjson::Value& value, Scene* scene )
 {
     static FunctionMapper< void, SkyboxCreateInfo& > mapping(
@@ -305,6 +310,7 @@ bool Scene::Load( const std::string& filename )
         { "OutputImageData",     ParseOutputImageData },
         { "PointLight",          ParsePointLight },
         { "SamplesPerAreaLight", ParseSamplesPerAreaLight },
+        { "SamplesPerPixel",     ParseSamplesPerPixel },
         { "Skybox",              ParseSkybox },
         { "Sphere",              ParseSphere },
         { "Texture",             ParseTexture },
@@ -366,7 +372,7 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
     //return hitData.t != FLT_MAX;
 }
 
-glm::vec3 Scene::GetBackgroundColor( const Ray& ray )
+glm::vec3 Scene::LEnvironment( const Ray& ray )
 {
     if ( skybox )
     {

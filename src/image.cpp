@@ -8,7 +8,7 @@ namespace PT
     Image::Image( int width, int height ) :
         m_width( width ),
         m_height( height ),
-        m_pixels( static_cast< glm::vec3* >( malloc( width * height * sizeof( glm::vec3 ) ) ) )
+        m_pixels( new glm::vec3[width * height]{ glm::vec3( 0 ) } )
     {
     }
 

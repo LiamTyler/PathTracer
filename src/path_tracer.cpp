@@ -1,11 +1,13 @@
 #include "path_tracer.hpp"
 #include "core_defines.hpp"
 #include "glm/ext.hpp"
+#include "sampling.hpp"
 #include "tonemap.hpp"
 #include "utils/random.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
 #include <atomic>
+#include <fstream>
 
 #define TONEMAP_AND_GAMMA IN_USE
 #define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -145,10 +147,117 @@ glm::vec3 ShootRay( const Ray& ray, Scene* scene, int depth )
     }
     else
     {
-        pixelColor = scene->GetBackgroundColor( ray );
+        pixelColor = scene->LEnvironment( ray );
     }
 
     return pixelColor;
+}
+
+glm::vec3 TracePath( const Ray& ray, Scene* scene, int depth )
+{
+    IntersectionData hitData;
+    if ( depth >= scene->maxDepth || !scene->Intersect( ray, hitData ) )
+    {
+        return scene->LEnvironment( ray );
+    }
+
+    auto N             = hitData.normal;
+    const auto V       = -ray.direction;
+    const auto& mat    = *hitData.material;
+    glm::vec3 fixedPos = hitData.position + EPSILON * N;
+    glm::vec3 albedo   = mat.GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
+    const auto& T      = hitData.tangent;
+    const auto  B      = glm::cross( T, N );
+    glm::mat3 TBN      = glm::mat3( T, B, N );
+
+    glm::vec3 color = glm::vec3( 0 );
+    color += mat.Ke;
+    color += albedo * scene->ambientLight;
+
+    glm::vec3 localDir = CosineSampleHemisphere( Random::Rand(), Random::Rand() );
+    glm::vec3 worldDir = TBN * localDir;
+    Ray newRay( fixedPos, worldDir );
+    color += albedo * TracePath( newRay, scene, depth + 1 );
+
+    return color;
+}
+
+glm::vec3 LDirect( const IntersectionData& hitData, Scene* scene, const glm::vec3& brdf )
+{
+    glm::vec3 fixedPos = hitData.position + EPSILON * hitData.normal;
+    glm::vec3 L( 0 );
+    for ( const auto& light : scene->lights )
+    {
+        glm::vec3 sampledColor( 0 );
+        for ( int i = 0; i < light->nSamples; ++i )
+        {
+            LightIlluminationInfo info;
+            info = light->GetLightIlluminationInfo( fixedPos );
+        
+            IntersectionData shadowHit;
+            Ray shadowRay( fixedPos, info.dirToLight );
+            if ( scene->Intersect( shadowRay, shadowHit ) && shadowHit.t + EPSILON < info.distanceToLight )
+            {
+                continue;
+            }
+
+            const auto Li          = info.attenuation * light->color;
+            const float cosineTerm = std::max( 0.f, glm::dot( hitData.normal, info.dirToLight ) );
+            // diffuse
+            sampledColor += Li * brdf * cosineTerm / info.pdf;
+        }
+        L += sampledColor / (float)light->nSamples;
+    }
+    return L * brdf;
+}
+
+glm::vec3 Li( const Ray& ray, Scene* scene )
+{
+    Ray currentRay           = ray;
+    glm::vec3 L              = glm::vec3( 0 );
+    glm::vec3 pathThroughput = glm::vec3( 1 );
+    
+    for ( int bounce = 0; bounce < scene->maxDepth; ++bounce )
+    {
+        IntersectionData hitData;
+        if ( !scene->Intersect( currentRay, hitData ) )
+        {
+            L += pathThroughput * scene->LEnvironment( currentRay );
+            break;
+        }
+
+        auto N             = hitData.normal;
+        glm::vec3 fixedPos = hitData.position + EPSILON * N;
+        glm::vec3 albedo   = hitData.material->GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
+        const auto& T      = hitData.tangent;
+        const auto  B      = glm::cross( T, N );
+        glm::mat3 TBN      = glm::mat3( T, B, N );
+
+        // estimate direct
+        L += LDirect( hitData, scene, albedo / M_PI );
+
+        L += pathThroughput * hitData.material->Ke;
+
+        // indirect
+        glm::vec3 wi     = glm::normalize( TBN * CosineSampleHemisphere( Random::Rand(), Random::Rand() ) );
+        glm::vec3 brdf   = albedo / M_PI;
+        float pdf        = std::max( 0.f, glm::dot( wi, N ) ) / M_PI;
+        if ( pdf == 0.f || brdf == glm::vec3( 0 ) )
+        {
+            break;
+        }
+        float cosineTerm = std::abs( glm::dot( wi, N ) );
+        
+        pathThroughput  *= (brdf * cosineTerm) / pdf;
+        if ( pathThroughput == glm::vec3( 0 ) )
+        {
+            break;
+        }
+
+        currentRay = Ray( fixedPos, wi );
+    }
+
+    return L;
 }
 
 void PathTracer::Render( Scene* scene )
@@ -167,31 +276,25 @@ void PathTracer::Render( Scene* scene )
     glm::vec3 dV     = -cam.GetUpDir()   * (2 * halfHeight / renderedImage.GetHeight());
     UL              += 0.5f * (dU + dV); // move to center of pixel
 
-    auto antiAliasAlg        = AntiAlias::GetAlgorithm( cam.aaAlgorithm );
-    auto antiAliasIterations = AntiAlias::GetIterations( cam.aaAlgorithm );
-
     std::atomic< int > renderProgress( 0 );
     int onePercent = static_cast< int >( std::ceil( renderedImage.GetHeight() / 100.0f ) );
 
     #pragma omp parallel for schedule( dynamic )
     for ( int row = 0; row < renderedImage.GetHeight(); ++row )
     {
-        Ray ray;
-        ray.position = cam.position;
         for ( int col = 0; col < renderedImage.GetWidth(); ++col )
         {
             glm::vec3 imagePlanePos = UL + dV * (float)row + dU * (float)col;
 
-            // do anti-aliasing by shooting more than 1 ray through the pixel in various directions
             glm::vec3 totalColor = glm::vec3( 0 );
-            for ( int rayCounter = 0; rayCounter < antiAliasIterations; ++rayCounter )
+            for ( int rayCounter = 0; rayCounter < scene->numSamplesPerPixel; ++rayCounter )
             {
-                glm::vec3 antiAliasedPos = antiAliasAlg( rayCounter, imagePlanePos, dU, dV );
-                ray.direction            = glm::normalize( antiAliasedPos - ray.position );
-                totalColor              += ShootRay( ray, scene, 0 );
+                glm::vec3 antiAliasedPos = AntiAlias::Jitter( rayCounter, imagePlanePos, dU, dV );
+                Ray ray                  = Ray( cam.position, glm::normalize( antiAliasedPos - ray.position ) );
+                totalColor              += Li( ray, scene );
             }
 
-            renderedImage.SetPixel( row, col, totalColor / (float)antiAliasIterations );
+            renderedImage.SetPixel( row, col, totalColor / (float)scene->numSamplesPerPixel );
         }
 
         int rowsCompleted = ++renderProgress;
@@ -212,7 +315,7 @@ void PathTracer::Render( Scene* scene )
     renderedImage.ForAllPixels( [&]( const glm::vec3& pixel )
         {
             glm::vec3 tonemapped = Uncharted2Tonemap( pixel, cam.exposure );
-            //return GammaCorrect( tonemapped, cam.gamma );
+            return GammaCorrect( tonemapped, cam.gamma );
             return tonemapped;
         }
     );

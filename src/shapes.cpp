@@ -12,12 +12,18 @@ Material* Sphere::GetMaterial() const
     return material.get();
 }
 
+float Sphere::Area() const
+{
+    return 4 * M_PI * radius * radius;
+}
+
 SurfaceInfo Sphere::Sample() const
 {
     SurfaceInfo info;
     glm::vec3 randNormal = UniformSampleSphere( Random::Rand(), Random::Rand() );
     info.position        = position + radius * randNormal;
     info.normal          = randNormal;
+    info.pdf             = 1.0f / Area();
     return info;
 }
 
@@ -59,6 +65,14 @@ Material* Triangle::GetMaterial() const
     return mesh->data.material.get();
 }
 
+float Triangle::Area() const
+{
+    const auto& v0 = mesh->data.vertices[i0];
+    const auto& v1 = mesh->data.vertices[i1];
+    const auto& v2 = mesh->data.vertices[i2];
+    return 0.5f * glm::length( glm::cross( v1 - v0, v2 - v0 ) );
+}
+
 SurfaceInfo Triangle::Sample() const
 {
     SurfaceInfo info;
@@ -68,6 +82,7 @@ SurfaceInfo Triangle::Sample() const
     const auto& obj = mesh->data;
     info.position   = u * obj.vertices[i0] + v * obj.vertices[i1] + ( 1 - u - v ) * obj.vertices[i2];
     info.normal     = glm::normalize( u * obj.normals[i0] + v * obj.normals[i1] + ( 1 - u - v ) * obj.normals[i2] );
+    info.pdf        = 1.0f / Area();
     return info;
 }
 

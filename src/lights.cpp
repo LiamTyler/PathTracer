@@ -32,8 +32,14 @@ LightIlluminationInfo AreaLight::GetLightIlluminationInfo( const glm::vec3& pos 
     info.distanceToLight = glm::length( surfInfo.position - pos );
     info.dirToLight      = glm::normalize( surfInfo.position - pos );
     info.attenuation     = glm::max( 0.0f, glm::dot( -info.dirToLight, surfInfo.normal ) ) / ( info.distanceToLight * info.distanceToLight );
+    info.pdf             = surfInfo.pdf;
 
     return info;
+}
+
+glm::vec3 AreaLight::Li( const glm::vec3& pos ) const
+{
+    return glm::vec3( 0 );
 }
 
 } // namespace PT

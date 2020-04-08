@@ -1,16 +1,17 @@
 {
-    "OutputImageData": { "resolution": [ 1000, 1000 ], "filename": "cornell.png" },
+    "OutputImageData": { "resolution": [ 1000, 1000 ], "filename": "cornell_2048spp.png" },
     "Camera": {
         "position": [ 0, 0, 3.3 ],
         "rotation": [ 0, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
-        "exposure": 1.0,
-        "gamma": 1.0,
-        "antialiasing": "REGULAR_4X4_GRID"
+        "exposure": 3.0,
+        "gamma": 1.0
     },
     "BVH": { "splitMethod": "SAH" },
-    "SamplesPerAreaLight": 256,
+    "SamplesPerAreaLight": 2,
+    "SamplesPerPixel": 2048,
+    "MaxDepth": 10,
     
     "AmbientLight": { "color": [ 0.0, 0.0, 0.0 ] },
     "BackgroundColor": { "color": [ 0, 0, 0 ] },

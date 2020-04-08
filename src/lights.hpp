@@ -11,6 +11,7 @@ struct LightIlluminationInfo
     float attenuation;
     float distanceToLight;
     glm::vec3 dirToLight;
+    float pdf = 1;
 };
 
 struct Light
@@ -21,6 +22,7 @@ struct Light
     int nSamples    = 1;
 
     virtual LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const = 0;
+    virtual glm::vec3 Li( const glm::vec3& pos ) const { return glm::vec3( 0 ); }
 };
 
 struct PointLight : public Light
@@ -46,6 +48,7 @@ struct AreaLight : public Light
     std::shared_ptr< Shape > shape;
 
     LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const override;
+    glm::vec3 Li( const glm::vec3& pos ) const override;
 };
 
 } // namespace PT

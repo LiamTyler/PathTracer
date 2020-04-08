@@ -21,7 +21,7 @@ public:
     bool Load( const std::string& filename );
 
     bool Intersect( const Ray& ray, IntersectionData& hitData );
-    glm::vec3 GetBackgroundColor( const Ray& ray );
+    glm::vec3 LEnvironment( const Ray& ray );
     
     Camera camera;
     std::vector< std::shared_ptr< Shape > > shapes; // invalid after bvh is built. Use bvh.shapes
@@ -33,6 +33,7 @@ public:
     glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );
     int maxDepth                    = 5;
     int numSamplesPerAreaLight      = 16;
+    int numSamplesPerPixel          = 32;
     BVH bvh;
 };
 

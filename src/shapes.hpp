@@ -16,6 +16,7 @@ struct SurfaceInfo
 {
     glm::vec3 position;
     glm::vec3 normal;
+    float pdf;
 };
 
 struct Shape
@@ -23,6 +24,7 @@ struct Shape
     Shape() = default;
 
     virtual Material* GetMaterial() const = 0;
+    virtual float Area() const = 0;
     // sample random position on shape surface
     virtual SurfaceInfo Sample() const = 0;
     virtual bool Intersect( const Ray& ray, IntersectionData* hitData ) const = 0;
@@ -39,6 +41,7 @@ struct Sphere : public Shape
     Transform worldToLocal;
 
     Material* GetMaterial() const override;
+    float Area() const override;
     SurfaceInfo Sample() const override;
     bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
     AABB WorldSpaceAABB() const override;
@@ -50,6 +53,7 @@ struct Triangle : public Shape
     uint32_t i0, i1, i2;
 
     Material* GetMaterial() const override;
+    float Area() const override;
     SurfaceInfo Sample() const override;
     bool Intersect( const Ray& ray, IntersectionData* hitData ) const override;
     AABB WorldSpaceAABB() const override;
