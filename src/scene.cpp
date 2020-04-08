@@ -42,10 +42,10 @@ static void ParseAmbientLight( rapidjson::Value& v, Scene* scene )
     scene->ambientLight = ParseVec3( member );
 }
 
-static void ParseBackgroundColor( rapidjson::Value& v, Scene* scene )
+static void ParseBackgroundRadiance( rapidjson::Value& v, Scene* scene )
 {
-    auto& member           = v["color"];
-    scene->backgroundColor = ParseVec3( member );
+    auto& member              = v["color"];
+    scene->backgroundRadiance = ParseVec3( member );
 }
 
 static void ParseBVH( rapidjson::Value& value, Scene* scene )
@@ -97,7 +97,7 @@ static void ParseDirectionalLight( rapidjson::Value& value, Scene* scene )
 {
     static FunctionMapper< void, DirectionalLight* > mapping(
     {
-        { "color",     []( rapidjson::Value& v, DirectionalLight* l ) { l->color     = ParseVec3( v ); } },
+        { "Lemit",     []( rapidjson::Value& v, DirectionalLight* l ) { l->Lemit     = ParseVec3( v ); } },
         { "direction", []( rapidjson::Value& v, DirectionalLight* l ) { l->direction = glm::normalize( ParseVec3( v ) ); } },
     });
 
@@ -208,7 +208,7 @@ static void ParsePointLight( rapidjson::Value& value, Scene* scene )
 {
     static FunctionMapper< void, PointLight* > mapping(
     {
-        { "color",    []( rapidjson::Value& v, PointLight* l ) { l->color    = ParseVec3( v ); } },
+        { "Lemit",    []( rapidjson::Value& v, PointLight* l ) { l->Lemit    = ParseVec3( v ); } },
         { "position", []( rapidjson::Value& v, PointLight* l ) { l->position = ParseVec3( v ); } },
     });
 
@@ -299,7 +299,7 @@ bool Scene::Load( const std::string& filename )
     static FunctionMapper< void, Scene* > mapping(
     {
         { "AmbientLight",        ParseAmbientLight },
-        { "BackgroundColor",     ParseBackgroundColor },
+        { "BackgroundColor",     ParseBackgroundRadiance },
         { "BVH",                 ParseBVH },
         { "Camera",              ParseCamera },
         { "DirectionalLight",    ParseDirectionalLight },
@@ -372,13 +372,18 @@ bool Scene::Intersect( const Ray& ray, IntersectionData& hitData )
     //return hitData.t != FLT_MAX;
 }
 
+bool Scene::Occluded( const Ray& ray, float tMax )
+{
+    return bvh.Occluded( ray, tMax );
+}
+
 glm::vec3 Scene::LEnvironment( const Ray& ray )
 {
     if ( skybox )
     {
         return glm::vec3( skybox->GetPixel( ray ) );
     }
-    return backgroundColor;
+    return backgroundRadiance;
 }
 
 } // namespace PT

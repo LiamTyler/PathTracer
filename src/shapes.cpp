@@ -7,6 +7,27 @@
 namespace PT
 {
 
+SurfaceInfo Shape::SampleWithRespectToSolidAngle( const Interaction& it ) const
+{
+    SurfaceInfo info = SampleWithRespectToArea();
+    glm::vec3 wi     = info.position - it.p;
+    if ( glm::length( wi ) == 0 )
+    {
+        info.pdf = 0;
+    }
+    else
+    {
+        float radiusSquared = glm::dot( wi, wi );
+        wi = glm::normalize( wi );
+        info.pdf *= radiusSquared / std::abs( glm::dot( it.n, -wi ) );
+        if ( std::isinf( info.pdf ) )
+        {
+            info.pdf = 0.f;
+        }
+    }
+    return info;
+}
+
 Material* Sphere::GetMaterial() const
 {
     return material.get();
@@ -17,7 +38,7 @@ float Sphere::Area() const
     return 4 * M_PI * radius * radius;
 }
 
-SurfaceInfo Sphere::Sample() const
+SurfaceInfo Sphere::SampleWithRespectToArea() const
 {
     SurfaceInfo info;
     glm::vec3 randNormal = UniformSampleSphere( Random::Rand(), Random::Rand() );
@@ -31,7 +52,7 @@ bool Sphere::Intersect( const Ray& ray, IntersectionData* hitData ) const
 {
     float t;
     Ray localRay = worldToLocal * ray;
-    if ( !intersect::RaySphere( localRay.position, localRay.direction, glm::vec3( 0 ), 1, t ) )
+    if ( !intersect::RaySphere( localRay.position, localRay.direction, glm::vec3( 0 ), 1, t, hitData->t ) )
     {
         return false;
     }
@@ -51,6 +72,12 @@ bool Sphere::Intersect( const Ray& ray, IntersectionData* hitData ) const
     hitData->bitangent = glm::cross( hitData->normal, hitData->tangent );
 
     return true;
+}
+
+bool Sphere::TestIfHit( const Ray& ray, float maxT ) const
+{
+    float t;
+    return intersect::RaySphere( ray.position, ray.direction, position, radius, t, maxT );
 }
 
 AABB Sphere::WorldSpaceAABB() const
@@ -73,7 +100,7 @@ float Triangle::Area() const
     return 0.5f * glm::length( glm::cross( v1 - v0, v2 - v0 ) );
 }
 
-SurfaceInfo Triangle::Sample() const
+SurfaceInfo Triangle::SampleWithRespectToArea() const
 {
     SurfaceInfo info;
     glm::vec2 sample = UniformSampleTriangle( Random::Rand(), Random::Rand() );
@@ -102,6 +129,13 @@ bool Triangle::Intersect( const Ray& ray, IntersectionData* hitData ) const
         return true;
     }
     return false;
+}
+
+bool Triangle::TestIfHit( const Ray& ray, float maxT ) const
+{
+    float t, u, v;
+    const auto& obj = mesh->data;
+    return intersect::RayTriangle( ray.position, ray.direction, obj.vertices[i0], obj.vertices[i1], obj.vertices[i2], t, u, v, maxT );
 }
 
 AABB Triangle::WorldSpaceAABB() const

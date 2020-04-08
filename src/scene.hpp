@@ -21,13 +21,14 @@ public:
     bool Load( const std::string& filename );
 
     bool Intersect( const Ray& ray, IntersectionData& hitData );
+    bool Occluded( const Ray& ray, float tMax = FLT_MAX );
     glm::vec3 LEnvironment( const Ray& ray );
     
     Camera camera;
     std::vector< std::shared_ptr< Shape > > shapes; // invalid after bvh is built. Use bvh.shapes
     std::vector< Light* > lights;
-    glm::vec3 ambientLight          = glm::vec3( 0.1f );
-    glm::vec3 backgroundColor       = glm::vec3( 0.1f );
+    glm::vec3 ambientLight          = glm::vec3( 0 );
+    glm::vec3 backgroundRadiance    = glm::vec3( 0 );
     std::shared_ptr< Skybox > skybox;
     std::string outputImageFilename = "rendered.png";
     glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );

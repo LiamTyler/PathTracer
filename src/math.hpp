@@ -59,4 +59,10 @@ struct Ray
     glm::vec3 direction;
 };
 
+struct Interaction
+{
+    glm::vec3 p;
+    glm::vec3 n;
+};
+
 } // namespace PT

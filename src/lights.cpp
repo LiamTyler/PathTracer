@@ -1,45 +1,57 @@
 #include "lights.hpp"
+#include "scene.hpp"
 #include "shapes.hpp"
 
 namespace PT
 {
 
-LightIlluminationInfo PointLight::GetLightIlluminationInfo( const glm::vec3& pos ) const
+glm::vec3 PointLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const
 {
-    LightIlluminationInfo info;
-    info.dirToLight      = position - pos;
-    info.distanceToLight = glm::length( info.dirToLight );
-    info.attenuation     = 1.0f / ( info.distanceToLight * info.distanceToLight );
-    info.dirToLight      = info.dirToLight / info.distanceToLight;
+    wi  = glm::normalize( position - it.p );
+    pdf = 1;
+    
+    float distToLight = glm::length( position - it.p );
 
-    return info;
+    IntersectionData shadowHit;
+    Ray shadowRay( it.p + 0.0001f * it.n, wi );
+    if ( scene->Occluded( shadowRay, distToLight - 0.0001f ) )
+    {
+        return glm::vec3( 0 );
+    }
+
+    return Lemit / (distToLight*distToLight);
 }
 
-LightIlluminationInfo DirectionalLight::GetLightIlluminationInfo( const glm::vec3& pos ) const
+glm::vec3 DirectionalLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const
 {
-    LightIlluminationInfo info;
-    info.distanceToLight = FLT_MAX;
-    info.attenuation     = 1.0f;
-    info.dirToLight      = -direction;
+    wi         = -direction;
+    pdf        = 1;
 
-    return info;
+    IntersectionData shadowHit;
+    Ray shadowRay( it.p + 0.0001f * it.n, wi );
+    if ( scene->Occluded( shadowRay, FLT_MAX ) )
+    {
+        return glm::vec3( 0 );
+    }
+
+    return Lemit;
 }
 
-LightIlluminationInfo AreaLight::GetLightIlluminationInfo( const glm::vec3& pos ) const
+glm::vec3 AreaLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const
 {
-    SurfaceInfo surfInfo = shape->Sample();
-    LightIlluminationInfo info;
-    info.distanceToLight = glm::length( surfInfo.position - pos );
-    info.dirToLight      = glm::normalize( surfInfo.position - pos );
-    info.attenuation     = glm::max( 0.0f, glm::dot( -info.dirToLight, surfInfo.normal ) ) / ( info.distanceToLight * info.distanceToLight );
-    info.pdf             = surfInfo.pdf;
+    SurfaceInfo surfInfo = shape->SampleWithRespectToSolidAngle( it );
+    wi                   = glm::normalize( surfInfo.position - it.p );
+    pdf                  = surfInfo.pdf;
+    float distToLight    = glm::length( surfInfo.position - it.p );
 
-    return info;
-}
+    IntersectionData shadowHit;
+    Ray shadowRay( it.p + 0.0001f * it.n, wi );
+    if ( scene->Occluded( shadowRay, distToLight - 0.000001f ) )
+    {
+        return glm::vec3( 0 );
+    }
 
-glm::vec3 AreaLight::Li( const glm::vec3& pos ) const
-{
-    return glm::vec3( 0 );
+    return glm::dot( -wi, surfInfo.normal ) > 0 ? Lemit : glm::vec3( 0 );
 }
 
 } // namespace PT

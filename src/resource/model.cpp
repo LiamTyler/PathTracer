@@ -294,7 +294,7 @@ namespace PT
             if ( data.material->Ke != glm::vec3( 0 ) )
             {
                 auto areaLight   = new AreaLight;
-                areaLight->color = data.material->Ke;
+                areaLight->Lemit = data.material->Ke;
                 areaLight->shape = tri;
                 lights.push_back( areaLight );
             }

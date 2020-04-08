@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glm/glm.hpp"
+#include "math.hpp"
 #include <memory>
 
 namespace PT
@@ -14,29 +14,30 @@ struct LightIlluminationInfo
     float pdf = 1;
 };
 
+class Scene;
+
 struct Light
 {
     virtual ~Light() = default;
 
-    glm::vec3 color = glm::vec3( 1, 1, 1 );
+    glm::vec3 Lemit = glm::vec3( 0 );
     int nSamples    = 1;
 
-    virtual LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const = 0;
-    virtual glm::vec3 Li( const glm::vec3& pos ) const { return glm::vec3( 0 ); }
+    virtual glm::vec3 Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const { return glm::vec3( 0 ); }
 };
 
 struct PointLight : public Light
 {
     glm::vec3 position = glm::vec3( 0, 0, 0 );
 
-    LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const override;
+    glm::vec3 Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const override;
 };
 
 struct DirectionalLight : public Light
 {
     glm::vec3 direction = glm::vec3( 0, -1, 0 );
 
-    LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const override;
+    glm::vec3 Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const override;
 };
 
 struct Shape;
@@ -47,8 +48,7 @@ struct AreaLight : public Light
 {
     std::shared_ptr< Shape > shape;
 
-    LightIlluminationInfo GetLightIlluminationInfo( const glm::vec3& pos ) const override;
-    glm::vec3 Li( const glm::vec3& pos ) const override;
+    glm::vec3 Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const override;
 };
 
 } // namespace PT

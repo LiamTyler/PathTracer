@@ -267,6 +267,48 @@ bool BVH::Intersect( const Ray& ray, IntersectionData* hitData ) const
     return hitData->t < oldMaxT;
 }
 
+bool BVH::Occluded( const Ray& ray, float tMax ) const
+{
+    int nodesToVisit[64];
+    int currentNodeIndex = 0;
+    int toVisitOffset    = 0;
+    glm::vec3 invRayDir  = glm::vec3( 1.0 ) / ray.direction;
+    int isDirNeg[3]      = { invRayDir.x < 0, invRayDir.y < 0, invRayDir.z < 0 };
+
+    while ( true )
+    {
+        const LinearBVHNode& node = nodes[currentNodeIndex];
+        if ( intersect::RayAABBFastest( ray.position, invRayDir, isDirNeg, node.aabb.min, node.aabb.max, tMax ) )
+        {
+            // if this  is a leaf node, check each triangle
+            if ( node.numShapes > 0 )
+            {
+                for ( int shapeIndex = node.firstIndexOffset; shapeIndex < node.firstIndexOffset + node.numShapes; ++shapeIndex )
+                {
+                    if ( shapes[shapeIndex]->TestIfHit( ray, tMax ) )
+                    {
+                        return true;
+                    }
+                }
+                if ( toVisitOffset == 0 ) break;
+                currentNodeIndex = nodesToVisit[--toVisitOffset];
+            }
+            else
+            {
+                nodesToVisit[toVisitOffset++] = node.secondChildOffset;
+                currentNodeIndex = currentNodeIndex + 1;
+            }
+        }
+        else
+        {
+            if ( toVisitOffset == 0 ) break;
+            currentNodeIndex = nodesToVisit[--toVisitOffset];
+        }
+    }
+
+    return false;
+}
+
 AABB BVH::GetAABB() const
 {
     assert( nodes );

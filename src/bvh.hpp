@@ -30,6 +30,7 @@ public:
 
     void Build( std::vector< std::shared_ptr< Shape > >& shapes );
     bool Intersect( const Ray& ray, IntersectionData* hitData ) const;
+    bool Occluded( const Ray& ray, float tMax = FLT_MAX ) const;
     AABB GetAABB() const;
 
     SplitMethod splitMethod = SplitMethod::Middle;
