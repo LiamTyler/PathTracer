@@ -8,6 +8,19 @@
 namespace PT
 {
 
+// just a lambertian BRDF so far
+struct BRDF
+{
+    glm::vec3 F( const glm::vec3& worldSpace_wo, const glm::vec3& worldSpace_wi ) const;
+    glm::vec3 Sample_F( const glm::vec3& worldSpace_wo, glm::vec3& worldSpace_wi, float& pdf ) const;
+    float Pdf( const glm::vec3& worldSpace_wo, const glm::vec3& worldSpace_wi ) const;
+
+    glm::vec3 albedo;
+    glm::vec3 T, B, N;
+};
+
+struct IntersectionData;
+
 struct Material : public Resource
 {
     glm::vec3 albedo = glm::vec3( 0.0f );
@@ -18,16 +31,8 @@ struct Material : public Resource
     float ior        = 1.0f;
     std::shared_ptr< Texture > albedoTexture;
 
-    glm::vec3 GetAlbedo( float u, float v ) const
-    {
-        glm::vec3 color = albedo;
-        if ( albedoTexture )
-        {
-            color *= glm::vec3( albedoTexture->GetPixel( u, v ) );
-        }
-
-        return color;
-    }
+    glm::vec3 GetAlbedo( const glm::vec2& texCoords ) const;
+    BRDF ComputeBRDF( IntersectionData* surfaceInfo ) const;
 };
 
 } // namespace PT

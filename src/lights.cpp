@@ -13,8 +13,8 @@ glm::vec3 PointLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pd
     float distToLight = glm::length( position - it.p );
 
     IntersectionData shadowHit;
-    Ray shadowRay( it.p + 0.0001f * it.n, wi );
-    if ( scene->Occluded( shadowRay, distToLight - 0.0001f ) )
+    Ray shadowRay( it.p, wi );
+    if ( scene->Occluded( shadowRay, distToLight ) )
     {
         return glm::vec3( 0 );
     }
@@ -28,7 +28,7 @@ glm::vec3 DirectionalLight::Sample_Li( const Interaction& it, glm::vec3& wi, flo
     pdf        = 1;
 
     IntersectionData shadowHit;
-    Ray shadowRay( it.p + 0.0001f * it.n, wi );
+    Ray shadowRay( it.p, wi );
     if ( scene->Occluded( shadowRay, FLT_MAX ) )
     {
         return glm::vec3( 0 );
@@ -45,8 +45,8 @@ glm::vec3 AreaLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf
     float distToLight    = glm::length( surfInfo.position - it.p );
 
     IntersectionData shadowHit;
-    Ray shadowRay( it.p + 0.0001f * it.n, wi );
-    if ( scene->Occluded( shadowRay, distToLight - 0.000001f ) )
+    Ray shadowRay( it.p, wi );
+    if ( scene->Occluded( shadowRay, distToLight ) )
     {
         return glm::vec3( 0 );
     }

@@ -13,6 +13,7 @@ struct IntersectionData
     glm::vec2 texCoords;
     glm::vec3 tangent;
     glm::vec3 bitangent;
+    glm::vec3 wo;
     Material* material;
     float t = FLT_MAX;
 };

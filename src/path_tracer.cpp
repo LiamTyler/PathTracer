@@ -12,7 +12,7 @@
 #define TONEMAP_AND_GAMMA IN_USE
 #define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 #define PROGRESS_BAR_WIDTH 60
-#define EPSILON 0.00001f
+#define EPSILON 0.0000005f
 
 namespace PT
 {   
@@ -70,22 +70,23 @@ glm::vec3 Refract(const glm::vec3& I, const glm::vec3& N, const float &ior )
     return k < 0 ? glm::vec3( 0 ) : eta * I + (eta * cosi - sqrtf( k )) * n; 
 } 
 
-glm::vec3 EstimateSingleDirect( Light* light, const IntersectionData& hitData, Scene* scene, const glm::vec3& brdf )
+glm::vec3 EstimateSingleDirect( Light* light, const IntersectionData& hitData, Scene* scene, const BRDF& brdf )
 {
     Interaction it{ hitData.position, hitData.normal };
     glm::vec3 wi;
-    float pdf;
-    glm::vec3 Li = light->Sample_Li( it, wi, pdf, scene );
-    if ( pdf == 0 )
+    float lightPdf;
+
+    // get incoming radiance, and how likely it was to sample that direction on the light
+    glm::vec3 Li = light->Sample_Li( it, wi, lightPdf, scene );
+    if ( lightPdf == 0 )
     {
         return glm::vec3( 0 );
     }
 
-    float cosineTerm = std::max( 0.f, glm::dot( hitData.normal, wi ) );
-    return Li * brdf * cosineTerm / pdf;
+    return brdf.F( hitData.wo, wi ) * Li * AbsDot( hitData.normal, wi ) / lightPdf;
 }
 
-glm::vec3 LDirect( const IntersectionData& hitData, Scene* scene, const glm::vec3& brdf )
+glm::vec3 LDirect( const IntersectionData& hitData, Scene* scene, const BRDF& brdf )
 {
     glm::vec3 L( 0 );
     for ( const auto& light : scene->lights )
@@ -97,7 +98,8 @@ glm::vec3 LDirect( const IntersectionData& hitData, Scene* scene, const glm::vec
         }
         L += Ld / (float)light->nSamples;
     }
-    return L * brdf;
+
+    return L;
 }
 
 glm::vec3 Li( const Ray& ray, Scene* scene )
@@ -109,40 +111,44 @@ glm::vec3 Li( const Ray& ray, Scene* scene )
     for ( int bounce = 0; bounce < scene->maxDepth; ++bounce )
     {
         IntersectionData hitData;
+        hitData.wo = -currentRay.direction;
         if ( !scene->Intersect( currentRay, hitData ) )
         {
             L += pathThroughput * scene->LEnvironment( currentRay );
             break;
         }
 
-        auto N             = hitData.normal;
-        glm::vec3 albedo   = hitData.material->GetAlbedo( hitData.texCoords.x, hitData.texCoords.y );
-        const auto& T      = hitData.tangent;
-        const auto  B      = glm::cross( T, N );
-        glm::mat3 TBN      = glm::mat3( T, B, N );
+        hitData.position += EPSILON * hitData.normal;
+
+        // emitted light of current surface
+        if ( bounce == 0 && glm::dot( hitData.wo, hitData.normal ) > 0 )
+        {
+            L += pathThroughput * hitData.material->Ke;
+        }
+
+        BRDF brdf = hitData.material->ComputeBRDF( &hitData ); 
 
         // estimate direct
-        L += LDirect( hitData, scene, albedo / M_PI );
+        L += pathThroughput * LDirect( hitData, scene, brdf );
 
-        L += pathThroughput * hitData.material->Ke;
+        // sample the BRDF to get the next ray's direction (wi)
+        float pdf;
+        glm::vec3 wi;
+        glm::vec3 F = brdf.Sample_F( hitData.wo, wi, pdf );
 
-        // indirect
-        glm::vec3 wi     = glm::normalize( TBN * CosineSampleHemisphere( Random::Rand(), Random::Rand() ) );
-        glm::vec3 brdf   = albedo / M_PI;
-        float pdf        = std::max( 0.f, glm::dot( wi, N ) ) / M_PI;
-        if ( pdf == 0.f || brdf == glm::vec3( 0 ) )
+        if ( pdf == 0.f || F == glm::vec3( 0 ) )
         {
             break;
         }
-        float cosineTerm = std::abs( glm::dot( wi, N ) );
         
-        pathThroughput  *= (brdf * cosineTerm) / pdf;
+        pathThroughput *= F * AbsDot( wi, hitData.normal ) / pdf;
         if ( pathThroughput == glm::vec3( 0 ) )
         {
             break;
         }
 
-        currentRay = Ray( hitData.position + EPSILON * N, wi );
+        //currentRay = Ray( hitData.position + EPSILON * hitData.normal, wi );
+        currentRay = Ray( hitData.position, wi );
     }
 
     return L;
@@ -202,9 +208,12 @@ void PathTracer::Render( Scene* scene )
 #if USING( TONEMAP_AND_GAMMA )
     renderedImage.ForAllPixels( [&]( const glm::vec3& pixel )
         {
-            glm::vec3 tonemapped = Uncharted2Tonemap( pixel, cam.exposure );
-            return GammaCorrect( tonemapped, cam.gamma );
-            return tonemapped;
+            glm::vec3 newColor = pixel;
+            //newColor = Uncharted2Tonemap( newColor, cam.exposure );
+            //newColor = GammaCorrect( newColor, cam.gamma );
+            newColor = PBRTGammaCorrect( newColor ) + glm::vec3( 1.0f / 512.0f );
+            newColor = glm::clamp( newColor, glm::vec3( 0 ), glm::vec3( 1 ) );
+            return newColor;
         }
     );
 #endif // #if USING( TONEMAP_AND_GAMMA )

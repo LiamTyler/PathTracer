@@ -1,12 +1,12 @@
 {
-    "OutputImageData": { "resolution": [ 1000, 1000 ], "filename": "cornell_64spp2.png" },
+    "OutputImageData": { "resolution": [ 500, 500 ], "filename": "cornell_64.png" },
     "Camera": {
         "position": [ 0, 0, 3.3 ],
         "rotation": [ 0, 0, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
-        "exposure": 10.0,
-        "gamma": 1.0
+        "exposure": 1.0,
+        "gamma": 2.2
     },
     "BVH": { "splitMethod": "SAH" },
     "SamplesPerAreaLight": 1,

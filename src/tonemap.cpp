@@ -8,6 +8,24 @@ glm::vec3 GammaCorrect( const glm::vec3& pixel, float gamma )
     return glm::pow( pixel, glm::vec3( 1.0f ) / glm::vec3( gamma ) );
 }
 
+glm::vec3 PBRTGammaCorrect( const glm::vec3& pixel )
+{
+    glm::vec3 newPixel;
+    for ( int i = 0; i < 3; ++i )
+    {
+        if ( pixel[i] <= 0.0031308f )
+        {
+            newPixel[i] = 12.92f * pixel[i];
+        }
+        else
+        {
+            newPixel[i] = 1.055f * std::pow( pixel[i], 1.f / 2.4f ) - 0.055f;
+        }
+    }
+    
+    return newPixel;
+}
+
 glm::vec3 ReinhardTonemap( const glm::vec3& pixel, float exposure )
 {
     auto adjustedColor = exposure * pixel;

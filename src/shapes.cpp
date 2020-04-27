@@ -19,7 +19,7 @@ SurfaceInfo Shape::SampleWithRespectToSolidAngle( const Interaction& it ) const
     {
         float radiusSquared = glm::dot( wi, wi );
         wi = glm::normalize( wi );
-        info.pdf *= radiusSquared / std::abs( glm::dot( it.n, -wi ) );
+        info.pdf *= radiusSquared / AbsDot( info.normal, -wi );
         if ( std::isinf( info.pdf ) )
         {
             info.pdf = 0.f;

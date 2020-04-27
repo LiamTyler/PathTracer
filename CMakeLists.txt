@@ -74,6 +74,7 @@ set(
     src/transform.cpp
     src/transform.hpp
     
+    src/resource/material.cpp
     src/resource/material.hpp
     src/resource/model.cpp
     src/resource/model.hpp

@@ -45,6 +45,11 @@ inline std::istream& operator>>( std::istream& in, glm::vec4& v )
     return in >> v.x >> v.y >> v.z >> v.w;
 }
 
+inline float AbsDot( const glm::vec3& v1, const glm::vec3& v2 )
+{
+    return glm::abs( glm::dot( v1, v2 ) );
+}
+
 namespace PT
 {
 
