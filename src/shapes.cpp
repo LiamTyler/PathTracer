@@ -106,8 +106,6 @@ SurfaceInfo Triangle::SampleWithRespectToArea() const
     glm::vec2 sample = UniformSampleTriangle( Random::Rand(), Random::Rand() );
     float u = sample.x;
     float v = sample.y;
-    //float u = 0.5;
-    //float v = 0.25;
     const auto& obj = mesh->data;
     info.position   = u * obj.vertices[i0] + v * obj.vertices[i1] + ( 1 - u - v ) * obj.vertices[i2];
     info.normal     = glm::normalize( u * obj.normals[i0] + v * obj.normals[i1] + ( 1 - u - v ) * obj.normals[i2] );
@@ -124,8 +122,6 @@ bool Triangle::Intersect( const Ray& ray, IntersectionData* hitData ) const
         hitData->t         = t;
         hitData->material  = obj.material.get();
         hitData->position  = ray.Evaluate( t );
-        // hitData->normal    = glm::normalize( u * obj.normals[i0]  + v * obj.normals[i1]  + ( 1 - u - v ) * obj.normals[i2] );
-        // hitData->tangent    = glm::normalize( u * obj.tangents[i0]  + v * obj.tangents[i1]  + ( 1 - u - v ) * obj.tangents[i2] );
         hitData->normal    = glm::normalize( ( 1 - u - v ) * obj.normals[i0]  + u * obj.normals[i1]  + v * obj.normals[i2] );
         hitData->tangent   = glm::normalize( ( 1 - u - v ) * obj.tangents[i0] + u * obj.tangents[i1] + v * obj.tangents[i2] );
         

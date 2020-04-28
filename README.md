@@ -5,7 +5,8 @@ Creating a small path tracer (currently just a ray tracer).
 
 ## Features
 - Spatial data structure: BVH using axis aligned bounding boxes. Defaults to using the surface area heuristic during construction.
-- Blinn-phong illumination with reflection and refraction
+- For the path tracer, just diffuse Lambertian surfaces currently
+- Importance sampling for the next ray direction, and the direct lighting estimation
 - Supported shapes: triangle, sphere
 - Supported lights: point, directional, area (defaults to 16 samples per area light for soft shadows)
 - 3D model loading via Assimp
@@ -37,7 +38,7 @@ Linux specifc:
 ```
 make -j6
 ```
-Note: With GCC9 a full parallel build (make -j) freezes during the assimp build on my machine. Just lower the number if it does freeze
+Note: With GCC9 a full parallel build (make -j) freezes during the Assimp build on my machine. Just lower the number if it does freeze
 
 Windows:
 Just open build/PathTracer.sln and build there
@@ -49,7 +50,5 @@ Just open build/PathTracer.sln and build there
 
 ## Example Output:
 resources/scenes/cornell.json
-![Alt text](docs_and_images/cornell.png)
+![Alt text](docs_and_images/cornell_spp_comparison.png)
 
-resources/scenes/dragon.json
-![Alt text](docs_and_images/dragon.png)

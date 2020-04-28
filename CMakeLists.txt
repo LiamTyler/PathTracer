@@ -20,6 +20,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib)
 
 add_subdirectory(ext)
 
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
+
 if (UNIX)
     #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wno-implicit-fallthrough -Wshadow -Wno-unused-variable -Wno-unused-function")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function")
@@ -30,6 +32,17 @@ elseif(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
 endif()
 
+set(LINUX_PROGRAM   "NOT_IN_USE")
+set(WINDOWS_PROGRAM "NOT_IN_USE")
+set(APPLE_PROGRAM   "NOT_IN_USE")
+
+if (UNIX AND NOT APPLE)
+    set(LINUX_PROGRAM   "IN_USE")
+elseif (WIN32)
+    set(WINDOWS_PROGRAM "IN_USE")
+elseif (APPLE)
+    set(APPLE_PROGRAM   "IN_USE")
+endif()
 
 configure_file(cmake/configuration.hpp.in ${CMAKE_SOURCE_DIR}/src/configuration.hpp)
 
@@ -47,6 +60,7 @@ set(
     src/aabb.hpp
     src/anti_aliasing.cpp
     src/anti_aliasing.hpp
+    src/assert.hpp
     src/bvh.cpp
     src/bvh.hpp
     src/camera.cpp
@@ -88,6 +102,8 @@ set(
     
     src/utils/json_parsing.cpp
     src/utils/json_parsing.hpp
+    src/utils/logger.cpp
+    src/utils/logger.hpp
     src/utils/random.cpp
     src/utils/random.hpp
     src/utils/time.cpp
@@ -101,6 +117,12 @@ set_target_properties(
     pathTracer
     PROPERTIES
     DEBUG_POSTFIX _debug
+)
+
+target_compile_definitions(pathTracer
+    PUBLIC $<$<CONFIG:Debug>:CMAKE_DEFINE_DEBUG_BUILD>
+    PUBLIC $<$<CONFIG:Release>:CMAKE_DEFINE_RELEASE_BUILD>
+    PUBLIC _CRT_SECURE_NO_WARNINGS
 )
 
 if(OpenMP_CXX_FOUND)

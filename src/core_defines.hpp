@@ -9,5 +9,5 @@
 #define USING(x) ( 9 / ( x ) == 1 )
 
 #define ARRAY_COUNT( array ) ( static_cast< int >( sizeof( array ) / sizeof( array[0] ) ) )
-#define PT_UNUSED( x ) (void) ( x );
-#define PT_MAYBE_UNUSED( x ) (void) ( x );
+#define UNUSED( x ) (void) ( x );
+#define MAYBE_UNUSED( x ) (void) ( x );

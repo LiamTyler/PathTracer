@@ -46,7 +46,7 @@ glm::vec3 AreaLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf
 
     IntersectionData shadowHit;
     Ray shadowRay( it.p, wi );
-    if ( scene->Occluded( shadowRay, distToLight - 0.01 ) )
+    if ( distToLight < 0.001 || scene->Occluded( shadowRay, distToLight ) )
     {
         return glm::vec3( 0 );
     }

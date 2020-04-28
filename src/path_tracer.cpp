@@ -3,6 +3,7 @@
 #include "glm/ext.hpp"
 #include "sampling.hpp"
 #include "tonemap.hpp"
+#include "utils/logger.hpp"
 #include "utils/random.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
@@ -12,7 +13,7 @@
 #define TONEMAP_AND_GAMMA IN_USE
 #define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 #define PROGRESS_BAR_WIDTH 60
-#define EPSILON 0.000001f
+#define EPSILON 0.00001f
 
 namespace PT
 {   
@@ -129,7 +130,8 @@ glm::vec3 Li( const Ray& ray, Scene* scene )
         BRDF brdf = hitData.material->ComputeBRDF( &hitData ); 
 
         // estimate direct
-        L += pathThroughput * LDirect( hitData, scene, brdf );
+        glm::vec3 Ld = LDirect( hitData, scene, brdf );
+        L += pathThroughput * Ld;
 
         // sample the BRDF to get the next ray's direction (wi)
         float pdf;
@@ -153,10 +155,11 @@ glm::vec3 Li( const Ray& ray, Scene* scene )
     return L;
 }
 
-void PathTracer::Render( Scene* scene )
+void PathTracer::Render( Scene* scene, int samplesPerPixelIteration )
 {
     renderedImage = Image( scene->imageResolution.x, scene->imageResolution.y );
-    std::cout << "\nRendering scene..." << std::endl;
+    int samplesPerPixel = scene->numSamplesPerPixel[samplesPerPixelIteration];
+    LOG( "\nRendering scene with SPP = ", samplesPerPixel, "..." );
 
     auto timeStart = Time::GetTimePoint();
     assert( renderedImage.GetPixels() );
@@ -171,7 +174,7 @@ void PathTracer::Render( Scene* scene )
 
     std::atomic< int > renderProgress( 0 );
     int onePercent = static_cast< int >( std::ceil( renderedImage.GetHeight() / 100.0f ) );
-
+    
     #pragma omp parallel for schedule( dynamic )
     for ( int row = 0; row < renderedImage.GetHeight(); ++row )
     {
@@ -180,14 +183,14 @@ void PathTracer::Render( Scene* scene )
             glm::vec3 imagePlanePos = UL + dV * (float)row + dU * (float)col;
 
             glm::vec3 totalColor = glm::vec3( 0 );
-            for ( int rayCounter = 0; rayCounter < scene->numSamplesPerPixel; ++rayCounter )
+            for ( int rayCounter = 0; rayCounter < samplesPerPixel; ++rayCounter )
             {
                 glm::vec3 antiAliasedPos = AntiAlias::Jitter( rayCounter, imagePlanePos, dU, dV );
                 Ray ray                  = Ray( cam.position, glm::normalize( antiAliasedPos - ray.position ) );
                 totalColor              += Li( ray, scene );
             }
 
-            renderedImage.SetPixel( row, col, totalColor / (float)scene->numSamplesPerPixel );
+            renderedImage.SetPixel( row, col, totalColor / (float)samplesPerPixel );
         }
 
         int rowsCompleted = ++renderProgress;
@@ -202,7 +205,7 @@ void PathTracer::Render( Scene* scene )
         }
     }
 
-    std::cout << "\nRendered scene in " << Time::GetDuration( timeStart ) / 1000 << " seconds" << std::endl;
+    LOG( "\nRendered scene in ", Time::GetDuration( timeStart ) / 1000, " seconds" );
     
 #if USING( TONEMAP_AND_GAMMA )
     renderedImage.ForAllPixels( [&]( const glm::vec3& pixel )

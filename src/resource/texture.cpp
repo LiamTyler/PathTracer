@@ -2,6 +2,7 @@
 #include "resource/texture.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
+#include "utils/logger.hpp"
 #include <algorithm>
 
 namespace PT
@@ -25,7 +26,7 @@ bool Texture::Load( const TextureCreateInfo& info )
 
     if ( !m_pixels )
     {
-        std::cout << "Failed to load image '" << info.filename << "'" << std::endl;
+        LOG_ERR( "Failed to load image '", info.filename, "'" );
         return false;
     }
     return true;

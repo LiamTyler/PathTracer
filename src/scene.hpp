@@ -34,7 +34,7 @@ public:
     glm::ivec2 imageResolution      = glm::ivec2( 1280, 720 );
     int maxDepth                    = 5;
     int numSamplesPerAreaLight      = 16;
-    int numSamplesPerPixel          = 32;
+    std::vector< int > numSamplesPerPixel = { 32 };
     BVH bvh;
 };
 

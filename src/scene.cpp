@@ -1,8 +1,10 @@
 #include "scene.hpp"
+#include "assert.hpp"
 #include "configuration.hpp"
 #include "intersection_tests.hpp"
 #include "resource/resource_manager.hpp"
 #include "utils/json_parsing.hpp"
+#include "utils/logger.hpp"
 #include "utils/time.hpp"
 
 namespace PT
@@ -103,6 +105,11 @@ static void ParseDirectionalLight( rapidjson::Value& value, Scene* scene )
 
     scene->lights.push_back( new DirectionalLight );
     mapping.ForEachMember( value, (DirectionalLight*)scene->lights[scene->lights.size() - 1] );
+}
+
+static void ParseLogFile( rapidjson::Value& value, Scene* scene )
+{
+    g_Logger.AddLocation( "SceneLogFile", value.GetString() );
 }
 
 static void ParseMaterial( rapidjson::Value& v, Scene* scene )
@@ -223,7 +230,11 @@ static void ParseSamplesPerAreaLight( rapidjson::Value& value, Scene* scene )
 
 static void ParseSamplesPerPixel( rapidjson::Value& value, Scene* scene )
 {
-    scene->numSamplesPerPixel = value.GetInt();
+    scene->numSamplesPerPixel.clear();
+    for ( const auto& v : value.GetArray() )
+    {
+        scene->numSamplesPerPixel.push_back( v.GetInt() );
+    }
 }
 
 static void ParseSkybox( rapidjson::Value& value, Scene* scene )
@@ -288,7 +299,7 @@ static void ParseTexture( rapidjson::Value& value, Scene* scene )
 bool Scene::Load( const std::string& filename )
 {
     auto startTime = Time::GetTimePoint();
-    std::cout << "Loading scene '" << filename << "'..." << std::endl;
+    LOG( "Loading scene '", filename, "'..." );
 
     auto document = ParseJSONFile( filename );
     if ( document.IsNull() )
@@ -303,6 +314,7 @@ bool Scene::Load( const std::string& filename )
         { "BVH",                 ParseBVH },
         { "Camera",              ParseCamera },
         { "DirectionalLight",    ParseDirectionalLight },
+        { "LogFile",             ParseLogFile },
         { "Material",            ParseMaterial },
         { "MaxDepth",            ParseMaxDepth },
         { "Model",               ParseModel },
@@ -319,7 +331,7 @@ bool Scene::Load( const std::string& filename )
     mapping.ForEachMember( document, this );
 
     float sceneLoadTime = Time::GetDuration( startTime ) / 1000.0f;
-    std::cout << "Building BVH..." << std::endl;
+    LOG( "Building BVH..." );
     auto bvhTime = Time::GetTimePoint();
     bvh.Build( shapes );
     float bvhBuildTime = Time::GetDuration( bvhTime ) / 1000.0f;
@@ -346,17 +358,17 @@ bool Scene::Load( const std::string& filename )
         else if ( dynamic_cast< PointLight* >( light ) ) numPointLights += 1;
         else if ( dynamic_cast< DirectionalLight* >( light ) ) numDirectionalLights += 1;
     }
-    std::cout << "Scene stats:" << std::endl;
-    std::cout << "------------------------------------------------------" << std::endl;
-    std::cout << "Load time: " << sceneLoadTime << " seconds" << std::endl;
-    std::cout << "BVH build time: " << bvhBuildTime << " seconds" << std::endl;
-    std::cout << "Number of shapes: " << shapes.size() << std::endl;
-    std::cout << "\tSpheres: " << numSpheres << std::endl;
-    std::cout << "\tTriangles: " << numTris << std::endl;
-    std::cout << "Number of lights: " << lights.size() << std::endl;
-    std::cout << "\tAreaLight: " << numAreaLights << std::endl;
-    std::cout << "\tPointLight: " << numPointLights << std::endl;
-    std::cout << "\tDirectionalLights: " << numDirectionalLights << std::endl;
+    LOG( "Scene stats:" );
+    LOG( "------------------------------------------------------" );
+    LOG( "Load time: ", sceneLoadTime, " seconds" );
+    LOG( "BVH build time: ", bvhBuildTime, " seconds" );
+    LOG( "Number of shapes: ", shapes.size() );
+    LOG( "\tSpheres: ", numSpheres );
+    LOG( "\tTriangles: ", numTris );
+    LOG( "Number of lights: ", lights.size() );
+    LOG( "\tAreaLight: ", numAreaLights );
+    LOG( "\tPointLight: ", numPointLights );
+    LOG( "\tDirectionalLights: ", numDirectionalLights );
 
     return true;
 }

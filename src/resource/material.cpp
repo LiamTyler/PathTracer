@@ -21,7 +21,6 @@ glm::vec3 BRDF::Sample_F( const glm::vec3& worldSpace_wo, glm::vec3& worldSpace_
 
 float BRDF::Pdf( const glm::vec3& worldSpace_wo, const glm::vec3& worldSpace_wi ) const
 {
-    //return AbsDot( worldSpace_wi, N ) / M_PI;
     bool sameHemisphere = glm::dot( worldSpace_wo, N ) * glm::dot( worldSpace_wi, N ) > 0;
     return sameHemisphere ? AbsDot( worldSpace_wi, N ) / M_PI : 0;
 }

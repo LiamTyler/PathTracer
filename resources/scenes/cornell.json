@@ -1,5 +1,6 @@
 {
-    "OutputImageData": { "resolution": [ 500, 500 ], "filename": "cornell_256.png" },
+    "OutputImageData": { "resolution": [ 500, 500 ], "filename": "cornell.png" },
+    "LogFile": "cornell.txt",
     "Camera": {
         "position": [ 0, 0, 3.3 ],
         "rotation": [ 0, 0, 0 ],
@@ -10,7 +11,7 @@
     },
     "BVH": { "splitMethod": "SAH" },
     "SamplesPerAreaLight": 1,
-    "SamplesPerPixel": 256,
+    "SamplesPerPixel": [ 1, 2, 4, 8, 16, 32, 64, 128, 256, 10000 ],
     "MaxDepth": 5,
     
     "AmbientLight": { "color": [ 0.0, 0.0, 0.0 ] },

@@ -1,6 +1,7 @@
 #include "resource/skybox.hpp"
 #include "configuration.hpp"
 #include "stb_image/stb_image.h"
+#include "utils/logger.hpp"
 #include <algorithm>
 #include <vector>
 
@@ -37,7 +38,7 @@ bool Skybox::Load( const SkyboxCreateInfo& info )
 
         if ( !pixelData[i] )
         {
-            std::cout << "Failed to load image '" << filenames[i] << "'" << std::endl;
+            LOG_ERR( "Failed to load image '", filenames[i], "'" );
             return false;
         }
         if ( i == 0 )

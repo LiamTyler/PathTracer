@@ -5,6 +5,7 @@
 #include "configuration.hpp"
 #include "intersection_tests.hpp"
 #include "resource/resource_manager.hpp"
+#include "utils/logger.hpp"
 #include "utils/time.hpp"
 #include <algorithm>
 #include <filesystem>
@@ -59,7 +60,7 @@ namespace PT
                 auto ret = std::make_shared< Texture >();
                 if ( !ret->Load( info ) )
                 {
-                    std::cout << "Failed to load texture '" << name << "' with default settings" << std::endl;
+                    LOG_ERR( "Failed to load texture '", name, "' with default settings" );
                     return nullptr;
                 }
                 ret->name = name;
@@ -67,12 +68,12 @@ namespace PT
             }
             else
             {
-                std::cout << "Could not find image file '" << name << "'" << std::endl;
+                LOG_ERR( "Could not find image file '", name,"'" );
             }
         }
         else
         {
-            std::cout << "Could not get texture of type: " << texType << std::endl;
+            LOG_ERR( "Could not get texture of type: ", texType );
         }
 
         return nullptr;
@@ -161,7 +162,7 @@ namespace PT
             aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials );
         if ( !scene )
         {
-            std::cout << "Error parsing model file '" << createInfo.filename.c_str() << "': " << importer.GetErrorString() << std::endl;
+            LOG_ERR( "Error parsing model file '", createInfo.filename.c_str(), "': ", importer.GetErrorString() );
             return false;
         }
 
@@ -248,7 +249,7 @@ namespace PT
 
         if ( !ParseMaterials( createInfo.filename, this, scene ) )
         {
-            std::cout << "Could not load the model's materials" << std::endl;
+            LOG_ERR( "Could not load the model's materials" );
             return false;
         }
 
