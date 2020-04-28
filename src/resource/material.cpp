@@ -21,11 +21,9 @@ glm::vec3 BRDF::Sample_F( const glm::vec3& worldSpace_wo, glm::vec3& worldSpace_
 
 float BRDF::Pdf( const glm::vec3& worldSpace_wo, const glm::vec3& worldSpace_wi ) const
 {
-    // if ( glm::dot( worldSpace_wo, worldSpace_wi ) < 0 )
-    // {
-    //     return 0;
-    // }
-    return AbsDot( worldSpace_wi, N ) / M_PI;
+    //return AbsDot( worldSpace_wi, N ) / M_PI;
+    bool sameHemisphere = glm::dot( worldSpace_wo, N ) * glm::dot( worldSpace_wi, N ) > 0;
+    return sameHemisphere ? AbsDot( worldSpace_wi, N ) / M_PI : 0;
 }
 
 glm::vec3 Material::GetAlbedo( const glm::vec2& texCoords ) const

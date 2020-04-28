@@ -130,7 +130,11 @@ namespace PT
     void Mesh::RecalculateNormals()
     {
         normals.clear();
-        normals.resize( vertices.size(), glm::vec3( 0 ) );
+        normals.resize( vertices.size() );
+        for ( auto& normal : normals )
+        {
+            normal = glm::vec3( 0 );
+        }
 
         for ( size_t i = 0; i < indices.size(); i += 3 )
         {
@@ -154,7 +158,7 @@ namespace PT
         name = createInfo.name;
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile( createInfo.filename.c_str(),
-            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials );
+            aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace | aiProcess_RemoveRedundantMaterials );
         if ( !scene )
         {
             std::cout << "Error parsing model file '" << createInfo.filename.c_str() << "': " << importer.GetErrorString() << std::endl;
@@ -177,10 +181,15 @@ namespace PT
             for ( uint32_t vIdx = 0; vIdx < paiMesh->mNumVertices ; ++vIdx )
             {
                 const aiVector3D* pPos    = &paiMesh->mVertices[vIdx];
-                const aiVector3D* pNormal = &paiMesh->mNormals[vIdx];
                 glm::vec3 pos( pPos->x, pPos->y, pPos->z );
                 mesh.vertices.emplace_back( pos );
-                mesh.normals.emplace_back( pNormal->x, pNormal->y, pNormal->z );
+
+
+                if ( paiMesh->HasNormals() )
+                {
+                    const aiVector3D* pNormal = &paiMesh->mNormals[vIdx];
+                    mesh.normals.emplace_back( pNormal->x, pNormal->y, pNormal->z );
+                }
 
                 if ( paiMesh->HasTextureCoords( 0 ) )
                 {

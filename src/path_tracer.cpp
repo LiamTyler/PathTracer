@@ -12,7 +12,7 @@
 #define TONEMAP_AND_GAMMA IN_USE
 #define PROGRESS_BAR_STR "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 #define PROGRESS_BAR_WIDTH 60
-#define EPSILON 0.0000005f
+#define EPSILON 0.000001f
 
 namespace PT
 {   
@@ -147,7 +147,6 @@ glm::vec3 Li( const Ray& ray, Scene* scene )
             break;
         }
 
-        //currentRay = Ray( hitData.position + EPSILON * hitData.normal, wi );
         currentRay = Ray( hitData.position, wi );
     }
 
