@@ -1,7 +1,7 @@
 # PathTracer
 
 ## Description
-Creating a small path tracer (currently just a ray tracer).
+Creating a small path tracer based heavily off of PBRT's path tracer and book
 
 ## Features
 - Spatial data structure: BVH using axis aligned bounding boxes. Defaults to using the surface area heuristic during construction.
