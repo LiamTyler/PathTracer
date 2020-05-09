@@ -15,7 +15,9 @@ struct BRDF
     glm::vec3 Sample_F( const glm::vec3& worldSpace_wo, glm::vec3& worldSpace_wi, float& pdf ) const;
     float Pdf( const glm::vec3& worldSpace_wo, const glm::vec3& worldSpace_wi ) const;
 
-    glm::vec3 albedo;
+    glm::vec3 Kd;
+    glm::vec3 Ks;
+    float Ns;
     glm::vec3 T, B, N;
 };
 

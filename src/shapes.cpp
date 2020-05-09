@@ -1,8 +1,9 @@
 #include "shapes.hpp"
 #include "intersection_tests.hpp"
-#include "utils/random.hpp"
 #include "resource/model.hpp"
 #include "sampling.hpp"
+#include "utils/logger.hpp"
+#include "utils/random.hpp"
 
 namespace PT
 {

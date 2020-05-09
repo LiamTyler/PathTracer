@@ -1,48 +1,25 @@
 {
-    "OutputImageData": {
-        "resolution": [ 1000, 1000 ],
-        "filename": "sponza.png"
-    },
+    "OutputImageData": { "resolution": [ 500, 500 ], "filename": "sponza.png" },
+    "LogFile": "sponza.txt",
     "Camera": {
-        "position": [ -4, 2, 0 ],
+        "position": [ -9, 2, 0 ],
         "rotation": [ 0, -90, 0 ],
         "vfov": 45,
         "aspectRatio": 1,
         "exposure": 1.0,
-        "gamma": 1.0,
-        "antialiasing": "NONE"
+        "gamma": 2.2
     },
-    "AmbientLight": {
-        "color": [ 0.5, 0.5, 0.5 ]
-    },
-    "BackgroundColor": {
-        "color": [ 0.2, 0.2, 0.2 ]
-    },
-    "DirectionalLight": {
-        "direction": [ 0, -4, -1 ],
-        "color": [ 1, 1, 1 ]
-    },
-    "PointLight": {
-        "position": [ 0, 2, 0 ],
-        "color": [ 10, 10, 10 ]
-    },
-    "Material": {
-        "name": "gray",
-        "albedo": [ 0.5, 0.5, 0.5 ],
-        "Ks": [ 0, 0, 0 ],
-        "Ns": 40,
-        "ior": 1
-    },
-    "Model": {
-        "name": "sponza",
-        "filename": "sponza/sponza.obj"
-    },
+    "BVH": { "splitMethod": "SAH" },
+    "SamplesPerAreaLight": 1,
+    "SamplesPerPixel": [ 16 ],
+    "MaxDepth": 5,
+    
+    "BackgroundColor": { "color": [ 0.0, 0.0, 0.0 ] },
+    "DirectionalLight": { "direction": [ 0, -6, 0 ], "Lemit": [ 12, 10, 8 ] },
+    
+    "Model": { "name": "sponza", "filename": "sponza/sponza.obj", "recalculateNormals": false },
     "ModelInstance": {
         "model": "sponza",
-        "transform": {
-            "position": [ 0, 0, 0 ],
-            "rotation": [ 0, 0, 0 ],
-            "scale": [ 0.01, 0.01, 0.01 ]
-        }
+        "transform": { "position": [ 0, 0, 0 ], "scale": [ 0.01, 0.01, 0.01 ] }
     }
 }

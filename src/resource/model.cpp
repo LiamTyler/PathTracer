@@ -142,10 +142,11 @@ namespace PT
             glm::vec3 v1 = vertices[indices[i + 0]];
             glm::vec3 v2 = vertices[indices[i + 1]];
             glm::vec3 v3 = vertices[indices[i + 2]];
-            glm::vec3 n = glm::cross( v2 - v1, v3 - v1 );
+            glm::vec3 n = glm::normalize( glm::cross( v2 - v1, v3 - v1 ) );
             normals[indices[i + 0]] += n;
             normals[indices[i + 1]] += n;
             normals[indices[i + 2]] += n;
+            
         }
 
         for ( auto& normal : normals )
@@ -185,7 +186,6 @@ namespace PT
                 glm::vec3 pos( pPos->x, pPos->y, pPos->z );
                 mesh.vertices.emplace_back( pos );
 
-
                 if ( paiMesh->HasNormals() )
                 {
                     const aiVector3D* pNormal = &paiMesh->mNormals[vIdx];
@@ -219,7 +219,11 @@ namespace PT
                 mesh.indices.push_back( face.mIndices[2] );
             }
 
-            mesh.RecalculateNormals();
+            if ( createInfo.recalculateNormals )
+            {
+                mesh.RecalculateNormals();
+            }
+
             if ( mesh.tangents.size() == 0 )
             {
                 // std::cout << "WARNING: model '" << name << "', mesh '" << mesh.name << "' had no uvs, so assimp could not generate tangents. Generating arbitrary tangent basis." << std::endl;

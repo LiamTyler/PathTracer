@@ -17,6 +17,7 @@ namespace PT
     {
         std::string name;
         std::string filename;
+        bool recalculateNormals = true;
     };
 
     struct Mesh

@@ -11,10 +11,9 @@
     },
     "BVH": { "splitMethod": "SAH" },
     "SamplesPerAreaLight": 1,
-    "SamplesPerPixel": [ 1, 2, 4, 8, 16, 32, 64, 128, 256, 10000 ],
+    "SamplesPerPixel": [ 16 ],
     "MaxDepth": 5,
     
-    "AmbientLight": { "color": [ 0.0, 0.0, 0.0 ] },
     "BackgroundColor": { "color": [ 0, 0, 0 ] },
     
     "Model": { "name": "cornell-box", "filename": "cornell-box/CornellBox-Original.obj" },

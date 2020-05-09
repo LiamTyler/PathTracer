@@ -211,9 +211,9 @@ void PathTracer::Render( Scene* scene, int samplesPerPixelIteration )
     renderedImage.ForAllPixels( [&]( const glm::vec3& pixel )
         {
             glm::vec3 newColor = pixel;
-            //newColor = Uncharted2Tonemap( newColor, cam.exposure );
-            //newColor = GammaCorrect( newColor, cam.gamma );
-            newColor = PBRTGammaCorrect( newColor ) + glm::vec3( 1.0f / 512.0f );
+            newColor = Uncharted2Tonemap( newColor, cam.exposure );
+            newColor = GammaCorrect( newColor, cam.gamma );
+            //newColor = PBRTGammaCorrect( newColor ) + glm::vec3( 1.0f / 512.0f );
             newColor = glm::clamp( newColor, glm::vec3( 0 ), glm::vec3( 1 ) );
             return newColor;
         }

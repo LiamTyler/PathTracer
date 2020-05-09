@@ -24,8 +24,8 @@ glm::vec3 PointLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pd
 
 glm::vec3 DirectionalLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf, Scene* scene ) const
 {
-    wi         = -direction;
-    pdf        = 1;
+    wi  = -direction;
+    pdf = 1;
 
     IntersectionData shadowHit;
     Ray shadowRay( it.p, wi );
@@ -46,7 +46,7 @@ glm::vec3 AreaLight::Sample_Li( const Interaction& it, glm::vec3& wi, float& pdf
 
     IntersectionData shadowHit;
     Ray shadowRay( it.p, wi );
-    if ( distToLight < 0.001 || scene->Occluded( shadowRay, distToLight ) )
+    if ( distToLight < 0.002 || scene->Occluded( shadowRay, distToLight ) )
     {
         return glm::vec3( 0 );
     }

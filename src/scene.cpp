@@ -38,12 +38,6 @@ static Transform ParseTransform( rapidjson::Value& value )
     return Transform( v.position, v.rotation, v.scale );
 }
 
-static void ParseAmbientLight( rapidjson::Value& v, Scene* scene )
-{
-    auto& member        = v["color"];
-    scene->ambientLight = ParseVec3( member );
-}
-
 static void ParseBackgroundRadiance( rapidjson::Value& v, Scene* scene )
 {
     auto& member              = v["color"];
@@ -147,8 +141,9 @@ static void ParseModel( rapidjson::Value& v, Scene* scene )
 {
     static FunctionMapper< void, ModelCreateInfo& > mapping(
     {
-        { "name",     []( rapidjson::Value& v, ModelCreateInfo& m ) { m.name     = v.GetString(); } },
-        { "filename", []( rapidjson::Value& v, ModelCreateInfo& m ) { m.filename = RESOURCE_DIR + std::string( v.GetString() ); } },
+        { "name",               []( rapidjson::Value& v, ModelCreateInfo& m ) { m.name     = v.GetString(); } },
+        { "filename",           []( rapidjson::Value& v, ModelCreateInfo& m ) { m.filename = RESOURCE_DIR + std::string( v.GetString() ); } },
+        { "recalculateNormals", []( rapidjson::Value& v, ModelCreateInfo& m ) { m.recalculateNormals = v.GetBool(); } },
     });
 
     ModelCreateInfo info;
@@ -309,7 +304,6 @@ bool Scene::Load( const std::string& filename )
 
     static FunctionMapper< void, Scene* > mapping(
     {
-        { "AmbientLight",        ParseAmbientLight },
         { "BackgroundColor",     ParseBackgroundRadiance },
         { "BVH",                 ParseBVH },
         { "Camera",              ParseCamera },
